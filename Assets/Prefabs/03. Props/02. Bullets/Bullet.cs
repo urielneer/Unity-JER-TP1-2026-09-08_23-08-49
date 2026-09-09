@@ -110,8 +110,6 @@ public class Bullet : MonoBehaviourPunCallbacks
                             // Ignore null //
                                 if (Col_Hit == null) continue;
                             // Compute Overlap //
-                                Debug.Log(
-                                        Col_Hit);
                                 bool Bool_IsOverlapping = Physics.ComputePenetration(
                                                                                         // In //
                                                                                             this.gameObject.GetComponent<MeshCollider>(),

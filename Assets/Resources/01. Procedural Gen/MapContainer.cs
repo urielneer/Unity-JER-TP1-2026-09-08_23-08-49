@@ -235,7 +235,7 @@ public class MapContainer : MonoBehaviourPunCallbacks
                             }
                         }
                 #endregion Hashtables 
-                #region    Coroutines
+                #region    Await
                         [PunRPC]
                         private void RPC_ReduceClientLoadCounter()
                         {
@@ -252,7 +252,7 @@ public class MapContainer : MonoBehaviourPunCallbacks
                                     MasterManager.Instance.MapManager.MatserStartUpCompleted();     
                             }
                         }
-                #endregion Coroutines 
+                #endregion Await 
             #endregion RPC
         #endregion PUN
     #endregion Methods

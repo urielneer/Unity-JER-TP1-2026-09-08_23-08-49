@@ -95,10 +95,8 @@ public class MapManager : BaseManager<MapManager>
                             // MapManager - Search Container //
                                 I_Trfm_MapContainer = (Object.FindFirstObjectByType<MapContainer>()).gameObject.transform;
                             // NetworkManager - PUN Network Code //
-Debug.Log("ZZZ");
                                 if (PhotonNetwork.IsMasterClient)
                                 {
-Debug.Log("YYY");
                                     // Master //
                                         // Remove Self From Countdown //
                                             ReduceCountdown();
@@ -106,17 +104,11 @@ Debug.Log("YYY");
                                             GenerateMap();
                                         // MenuManager - Switch Screen //
                                             MasterManager.Instance.MenuManager.OpenMenu("HUD"); 
-
-                                        // Coroutine - Wait For "All Loads" //
-                                            //StartCoroutine(AllClientsFinishedLoadingRoom());
-
                                         // Async Await - Wait For "All Loads" //
-Debug.Log("AAA1 "+ R_Int_PlayersRemaining);
                                             // Wait //
                                                 bool Bool_Success = await R_Bool_AllPlayersFinished.Task;
                                             // Inform Completion //
                                                 I_Trfm_MapContainer.GetComponent<MapContainer>().MasterWaitCompleted();
-Debug.Log("AAA2 "+ R_Int_PlayersRemaining);
                                         // Proceed //
                                                 MasterManager.Instance.StartUpProceed();
 
@@ -124,29 +116,17 @@ Debug.Log("AAA2 "+ R_Int_PlayersRemaining);
                                 }
                                 else
                                 { 
-Debug.Log("XXX");
                                     // Clients //
-                                        // Coroutine - Wait For "Load" //
-                                            //StartCoroutine(CurrentClientFinishedLoadingRoom());
-
                                         // Async Await - Wait For "Load" //
-Debug.Log("BBB1 "+ R_Bool_StartupCompleted);
                                             // Wait //
                                                 bool Bool_Success1 = await R_Bool_StartupCompleted.Task;
                                             // Inform Completion //
                                                 I_Trfm_MapContainer.GetComponent<MapContainer>().ReduceClientLoadCounter();
-Debug.Log("BBB2 "+ R_Bool_StartupCompleted);
-
-                                        // Coroutine - Wait For "Master's Map Generation Finished" //
-                                            //StartCoroutine(MasterFinishedWaiting());
-                                            
                                         // Async Await - Wait For "Load" //
-Debug.Log("CCC1 "+ R_Bool_MasterStartupCompleted);
                                             // Wait //
                                                 bool Bool_Success2 = await R_Bool_MasterStartupCompleted.Task;
                                             // Inform Completion //
                                                 I_Trfm_MapContainer.GetComponent<MapContainer>().ReduceClientLoadCounter();
-Debug.Log("CCC2 "+ R_Bool_MasterStartupCompleted);
                                         // Proceed //
                                                 MasterManager.Instance.StartUpProceed();
 
@@ -337,10 +317,7 @@ Debug.Log("CCC2 "+ R_Bool_MasterStartupCompleted);
                 {
                     #region    Spawn Map
                         foreach (int Int_ID in R_Int_A1_WallIDs)
-{
                             AddNewToArray(ref O_GObj_A1_SpawnPoint, (PhotonView.Find(Int_ID)).GetComponent<FloorTile_W>().SpawnPoint);
-Debug.Log(Int_ID+ " " + R_Int_A1_WallIDs.Length);
-}
                         R_Bool_StartupCompleted?.TrySetResult(true);
                     #endregion Spawn Map
                 }
@@ -365,29 +342,5 @@ Debug.Log(Int_ID+ " " + R_Int_A1_WallIDs.Length);
                 }
             #endregion Hastable
         #endregion PUN
-        #region    Coroutines Methods
-            /*
-            private System.Collections.IEnumerator AllClientsFinishedLoadingRoom()
-            {
-                Debug.Log("AAA1 "+ R_Int_PlayersRemaining);
-                yield return new WaitWhile(() => (R_Int_PlayersRemaining != 0));
-                I_Trfm_MapContainer.GetComponent<MapContainer>().MasterWaitCompleted();
-                Debug.Log("AAA2 "+ R_Int_PlayersRemaining);
-            }
-            private System.Collections.IEnumerator CurrentClientFinishedLoadingRoom()
-            {
-                Debug.Log("BBB1 "+ R_Bool_StartupCompleted);
-                yield return new WaitWhile(() => !R_Bool_StartupCompleted);
-                I_Trfm_MapContainer.GetComponent<MapContainer>().ReduceClientLoadCounter();
-                Debug.Log("BBB2 "+ R_Bool_StartupCompleted);
-            }
-            private System.Collections.IEnumerator MasterFinishedWaiting()
-            {
-                Debug.Log("CCC1 "+ R_Bool_MasterStartupCompleted);
-                yield return new WaitWhile(() => !R_Bool_MasterStartupCompleted); 
-                Debug.Log("CCC2 "+ R_Bool_MasterStartupCompleted);
-            }
-            */
-        #endregion Coroutines Methods
     #endregion Methods
 }
