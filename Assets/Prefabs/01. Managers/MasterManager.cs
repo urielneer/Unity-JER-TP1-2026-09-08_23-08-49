@@ -144,7 +144,9 @@ public class MasterManager : BaseManager<MasterManager>
             }
         #endregion Override Methods
         #region    Scene Subscription Methods
+            #pragma warning disable CS1998
             private async void OnSceneLoaded(Scene Scn_Scene, LoadSceneMode LSM_Mode)
+            #pragma warning restore CS1998
             {
                 OnStartUp();
             }

@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: PlayerMat
+  m_Name: PlayerMat_A4
   m_Shader: {fileID: -6465566751694194690, guid: 29f0c6ffb544f564abbcf89d7f93d5c4, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -54,6 +54,6 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     m_Colors:
-    - _PlayerColor: {r: 1, g: 1, b: 1, a: 1}
+    - _PlayerColor: {r: 0, g: 0.6025306, b: 0.7254902, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

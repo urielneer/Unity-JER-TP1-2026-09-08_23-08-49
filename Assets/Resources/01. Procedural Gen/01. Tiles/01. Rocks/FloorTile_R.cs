@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class FloorTile_R : MonoBehaviour
+public class FloorTile_R : Tiles
 {
     [SerializeField] private GameObject[] GObj_A1_Rocks;
     // Start is called once before the first execution of Update after the MonoBehaviour is created

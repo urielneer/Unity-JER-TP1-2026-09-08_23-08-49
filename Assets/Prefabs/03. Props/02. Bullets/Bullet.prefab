@@ -130,3 +130,12 @@ MonoBehaviour:
   _detectionLayers:
     serializedVersion: 2
     m_Bits: 448
+  _materials:
+  - {fileID: 2100000, guid: b2fe96734f90a924494f3a5144b81a06, type: 2}
+  - {fileID: 2100000, guid: 989a709f7412b864dbcbc5e283e14198, type: 2}
+  - {fileID: 2100000, guid: 8ba8aaaf6482dd041b021f69506ca2e2, type: 2}
+  - {fileID: 2100000, guid: e033bbcfefb40c542a9b32493fe0e626, type: 2}
+  - {fileID: 2100000, guid: 6e88ea49c916da642a1ef269e0dfadb8, type: 2}
+  - {fileID: 2100000, guid: f6e0ce240309f1a45958b5acad3d5fe5, type: 2}
+  - {fileID: 2100000, guid: 2fff0ea4b0547a741a6ad8a75ecfa42e, type: 2}
+  - {fileID: 2100000, guid: 23a2f7b889847da48b6ee05920673f2e, type: 2}

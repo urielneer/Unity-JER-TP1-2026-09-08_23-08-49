@@ -2,6 +2,7 @@ using System;
 using Photon.Pun;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static CustomExtension.ArrayExtensions;
 
 public class BasePlayer : MonoBehaviourPunCallbacks
 {
@@ -13,11 +14,39 @@ public class BasePlayer : MonoBehaviourPunCallbacks
             public int ID => IO_Int_ID;
             float IO_Flt_Health;
             public float Health => IO_Flt_Health;
+            PlayerType R_E_PT_ClientType;
 
             private bool R_Bool_CanShoot = true;
             private bool R_Bool_IsDead = false;
+            private bool R_Bool_IsRotationLocked = false;
+            private float R_Flt_SpeedModifier = 1;
+            private Coroutine R_Crtn_Active = null;
         #endregion Player Data   
         #region    Character 
+            [Header(" Sight Sensor Settings")]
+                [SerializeField] SightSensor _prefabSightSensor;
+                SightSensor I_Ctm_SS_PrefabSightSensor;
+                SightSensor R_Ctm_SS_SightSensor = null;
+            [Space(10)]
+            [Header(" Mouse Settings")]
+                [SerializeField] Mouse _prefabMouse;
+                Mouse I_Ctm_Mse_PrefabMouse;
+                Mouse R_Ctm_Mse_Mouse = null;
+                [SerializeField] float _mouseSpeed;
+                private float I_Flt_MouseSpeed;
+                [SerializeField] Vector2 _maxDistances;
+                private Vector2 I_Vec2_MaxDistances;
+                private float R_Flt_MaxDistance;
+                float R_Flt_MouseDir;
+            [Space(10)]
+            [Header(" Inventory Settings")]
+                int Int_ItemIndex = -1;
+                [SerializeField] LayerMask _collisionLayers;
+                LayerMask I_LyrM_CollisionLayers;
+            [Space(10)]
+            [Header(" Skill Settings")]
+                int Int_SkillIndex = 0;
+            [Space(10)]
             [Header(" Camera Settings")]
                 [SerializeField] Transform _cameraAnchor;
                 private Transform IO_Tfm_CameraAnchor;
@@ -26,6 +55,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                 private Vector3 I_Vec3_CamPos;
                 [SerializeField] Vector3 _cameraRotation;
                 private Vector3 I_Vec3_CamRot;
+            [Space(10)]
             [Header(" Body Settings")]
                 [SerializeField] Transform _canonAnchor;
                 private Transform IO_Tfm_CanonAnchor;
@@ -36,6 +66,18 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                 private float I_Flt_CanonRotationStrength;
                 [SerializeField] GameObject[] _bodyParts;
                 private GameObject[] I_GObj_A1_BodyParts;
+                [SerializeField] Material[] _materials;
+                private Material[] I_Mat_A1_Materials;
+            [Space(10)]
+            [Header(" Hijack Settings")]
+                [SerializeField] float _controlFlipSeconds;
+                private float I_Flt_ControlFlipSeconds;
+                bool O_Bool_IsFlipped;
+                public bool IsFlipped => O_Bool_IsFlipped;
+                [SerializeField] float _fallStateSeconds;
+                private float I_Flt_FallStateSeconds;
+                bool O_Bool_IsFallen;
+                public bool IsFallen => O_Bool_IsFallen;
             [Space(10)]
         #endregion Character   
         #region    Movement
@@ -142,16 +184,29 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                 // Runtime //
                     private bool R_Bool_IsGrounded = false;
         #endregion Jumping
+        #region    External Classes
+            bool O_Bool_IsMoving = false;
+            public bool IsMoving => O_Bool_IsMoving;
+        #endregion External Classes
     #endregion Variables
     #region    Methods
         #region    Unity Methods
             public void Awake()
             {
+                // Inventory //
+                    I_LyrM_CollisionLayers = _collisionLayers;
+                // Sight Sensor //
+                    I_Ctm_SS_PrefabSightSensor = _prefabSightSensor;
+                // Mouse //
+                    I_Ctm_Mse_PrefabMouse = _prefabMouse;
+                    I_Flt_MouseSpeed = _mouseSpeed;
+                    I_Vec2_MaxDistances = _maxDistances;
                 // Body //
                     IO_Tfm_CanonAnchor = _canonAnchor;
                     I_Vec2_CanonRotationBounds = _canonRotationBounds;
                     I_Flt_CanonRotationStrength = _canonRotationStrength;
                     I_GObj_A1_BodyParts =_bodyParts;
+                    I_Mat_A1_Materials = _materials;
                 // Camera //
                     IO_Tfm_CameraAnchor = _cameraAnchor;
                     I_Vec3_CamPos = _cameraPosition;
@@ -196,6 +251,11 @@ public class BasePlayer : MonoBehaviourPunCallbacks
 
                     R_Bool_IsJumping = false;
                     R_Bool_IsGrounded = true;
+
+                    R_Ctm_SS_SightSensor = null;
+                    R_Ctm_Mse_Mouse = null;
+
+                    SetVisibility(true);
             }
         #endregion Unity Methods
         #region    Override Methods
@@ -219,6 +279,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                     if (!GetComponent<PhotonView>().IsMine) return;
                 // Character Logic //
                     ExecuteJumpReset(Flt_FixedDT);
+                    UpdateIsMoving();
             }
             public virtual void OnFixedUpdate(float Flt_FixedDT)
             {
@@ -226,18 +287,51 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                     if (!GetComponent<PhotonView>().IsMine) return;
                 // Character Logic //
                     ExecuteMovement(Flt_FixedDT);
+                    ExecuteMouseMovement(Flt_FixedDT);
                     ExecuteBodyRotation(Flt_FixedDT);
                     ExecuteCanonRotation(Flt_FixedDT);
                     ExecuteJumpVariableGravity(Flt_FixedDT);
+                    PercieveContact(Flt_FixedDT);
             }
         #endregion Override Methods
         #region    Custom Methods
             #region    Player Data
-                public void SetData(string Str_Input, int Int_Input, float Flt_Input)
+                public void SetData(string Str_Input, int Int_Input, float Flt_Input, PlayerType E_PT_ClientType)
                 {
-                    IO_Str_OwnerNickname = Str_Input;
-                    IO_Int_ID = Int_Input;
-                    IO_Flt_Health = Flt_Input;
+                    // Variables //
+                        IO_Str_OwnerNickname = Str_Input;
+                        IO_Int_ID = Int_Input;
+                        IO_Flt_Health = Flt_Input;
+                        R_E_PT_ClientType = E_PT_ClientType;
+
+    /* ! */             R_E_PT_ClientType = PlayerType.Chaser;
+                    // Type Differences //
+                        if (R_E_PT_ClientType == PlayerType.Vigilant)
+                        {
+                                R_Bool_IsRotationLocked = true;
+                            
+                                R_Flt_MaxDistance = I_Vec2_MaxDistances.x;
+                            // Rotation lock //
+                                ReenableRotation();
+                        }
+                        else
+                        {
+                                R_Bool_IsRotationLocked = false;
+                                RemoveSpecificFromArray(ref I_GObj_A1_BodyParts, this.transform.Find("FogWar").gameObject);
+                                Destroy(this.transform.Find("FogWar").gameObject);
+
+                                R_Flt_MaxDistance = I_Vec2_MaxDistances.y;
+                        }
+                }
+                public void UpdateIsMoving()
+                {
+                    O_Bool_IsMoving = (
+                                          (I_Flt_CurrentMovementSpeedX > 0) && (I_Flt_CurrentMovementSpeedY > 0) || // Is Moving ? //
+                                          (R_Flt_CurrentRotationSpeed > 0)                                       || // Is Rotating ? //
+                                          O_Bool_IsFallen                                                           // Has Fallen ? //
+                                      ) ?
+                                        true :
+                                        false;
                 }
                 public void SetVisibility(bool Bool_IsVisible)
                 {
@@ -249,7 +343,8 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                                     GObj_Element.GetComponent<Renderer>().enabled = Bool_IsVisible;
                             // Toggle Colliders //
                                 // Disable //
-                                    GObj_Element.GetComponent<Collider>().enabled = Bool_IsVisible;
+                                    if (GObj_Element.TryGetComponent<Collider>(out Collider Coll_Element))
+                                        Coll_Element.enabled = Bool_IsVisible;
                         }
                     // Toggle Gravity //
                         this.GetComponent<Rigidbody>().useGravity = Bool_IsVisible;
@@ -327,7 +422,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                         }
 
                     // Calculate "Rotation Delta" //
-                        float Flt_YDegrees = R_Int_LastInputRotation * R_Flt_CurrentRotationSpeed * Flt_FixedDT;
+                        float Flt_YDegrees = R_Flt_SpeedModifier * R_Int_LastInputRotation * R_Flt_CurrentRotationSpeed * Flt_FixedDT;
                         Qtn_DeltaRotation = Quaternion.Euler(0f, Flt_YDegrees, 0f);
 
                     // Apply Rotation //
@@ -343,6 +438,17 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                 }
             #endregion Rotation
             #region    Movement
+                private void ExecuteMouseMovement(float Flt_FixedDT)
+                {
+                    // Variables //
+                        Vector3 Vec3_Displacement = Vector3.zero;
+                    // Set Displacement //
+                        Vec3_Displacement += XAxisMovement(Flt_FixedDT);
+                        Vec3_Displacement += YAxisMovement(Flt_FixedDT);
+                    // Apply Movement //
+                        R_Ctm_Mse_Mouse.transform.localPosition += (R_Flt_MouseDir * I_Flt_MouseSpeed * new Vector3(0f,0f,1f) * Flt_FixedDT);
+                        R_Ctm_Mse_Mouse.transform.localPosition = new Vector3(0f, 0f, Mathf.Clamp(R_Ctm_Mse_Mouse.transform.localPosition.z, 2.2f, R_Flt_MaxDistance));
+                }
                 private void ExecuteMovement(float Flt_FixedDT)
                 {
                     // Variables //
@@ -426,7 +532,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                             #endregion Decelerate & Stop 
                         }
                     // Calculate "Displacement Vector" //
-                        return transform.right * R_Int_LastInputMovementX * I_Flt_CurrentMovementSpeedX * Flt_FixedDT;
+                        return R_Flt_SpeedModifier * transform.right * R_Int_LastInputMovementX * I_Flt_CurrentMovementSpeedX * Flt_FixedDT;
                 }
                 private Vector3 YAxisMovement(float Flt_FixedDT)
                 {
@@ -497,7 +603,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                             #endregion Decelerate & Stop 
                         }
                     // Calculate "Displacement Vector" //
-                        return transform.forward * R_Int_LastInputMovementY * I_Flt_CurrentMovementSpeedY * Flt_FixedDT;
+                        return R_Flt_SpeedModifier * transform.forward * R_Int_LastInputMovementY * I_Flt_CurrentMovementSpeedY * Flt_FixedDT;
                 }
             #endregion Movement
             #region    Jump
@@ -532,7 +638,12 @@ public class BasePlayer : MonoBehaviourPunCallbacks
             #endregion Jump
             #region    Combat
                 #region    Shoot
-                    private void ExecuteShot()
+                    private void ExecuteStraightShot(int Int_Index) // Ahora es la tecnica default // // Ahora es el item o habilidad //
+                    {
+                        R_Bool_CanShoot = false;
+                        MasterManager.Instance.BulletManager.SynchronizeBullet(this, this.transform.forward, Int_Index);
+                    }
+/* ! */             private void ExecuteCurvedShot()  
                     {
                         R_Bool_CanShoot = false;
                         MasterManager.Instance.BulletManager.SynchronizeBullet(this, this.transform.forward);
@@ -544,10 +655,33 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                         // Variables //
                             R_Bool_CanShoot = true;
                             R_Bool_IsDead = false;
+                            O_Bool_IsFlipped = false;
+                            O_Bool_IsFallen = false;
+                        // Spawn Other Prefabs //
+                            // Sight //
+                                if (R_Ctm_SS_SightSensor == null)
+                                {
+                                    if (R_E_PT_ClientType == PlayerType.Vigilant)
+                                    {
+                                        R_Ctm_SS_SightSensor = Instantiate(I_Ctm_SS_PrefabSightSensor, Vector3.zero, Quaternion.identity);
+                                        R_Ctm_SS_SightSensor.transform.SetParent(this.CameraAnchor.gameObject.transform, false);
+                                        R_Ctm_SS_SightSensor.transform.localPosition = new Vector3(0f, -2f, 0f);
+                                        R_Ctm_SS_SightSensor.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+                                    }
+                                }
+                            // Mouse //
+                                if (R_Ctm_Mse_Mouse == null)
+                                {
+                                    R_Ctm_Mse_Mouse = Instantiate(I_Ctm_Mse_PrefabMouse, Vector3.zero, Quaternion.identity);
+                                    R_Ctm_Mse_Mouse.transform.localPosition = new Vector3(0f, 0f, 5f);
+                                    R_Ctm_Mse_Mouse.transform.SetParent(this.transform);
+                                }
                         // Position //
                             int Int_RandIndex = UnityEngine.Random.Range(0, MasterManager.Instance.MapManager.SpawnPoints.Length);
                             this.transform.position = MasterManager.Instance.MapManager.SpawnPoints[Int_RandIndex].gameObject.transform.position;
                             this.transform.rotation = MasterManager.Instance.MapManager.SpawnPoints[Int_RandIndex].gameObject.transform.rotation;
+                        // Material //
+                            I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[(R_E_PT_ClientType == PlayerType.Chaser) ? 1 : 0];
                         // Visibility //
                             SetVisibility(true);
                     }
@@ -570,21 +704,38 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                         // Respawn
                             ExecuteReSpawnDelay();
                     }
-                    public void ExecuteDamage(float Flt_Damage)
-                    {
-                        IO_Flt_Health = Mathf.Max(0.0f, IO_Flt_Health - Flt_Damage);
-                        if (IO_Flt_Health <= 0) MasterManager.Instance.CharacterManager.KillCharacter(IO_Int_ID);
-                    }
                 #endregion Damage
             #endregion Combat
         #endregion Custom Methods
         #region Listener Methods
             #region    Callee Methods
                 #region   OnStarted
+                    public void OnStartedMouseMoving(Vector2 Vec2_Input) 
+                    {
+                        // Stop If Dead //
+                            if (R_Bool_IsDead) return;
+                        // Stop If Fallen //
+                            if (O_Bool_IsFallen) return;  
+                        // Stop If RotationLocked //
+                            if (R_Bool_IsRotationLocked) return;      
+                        // Proceed //
+                            R_Flt_MouseDir = (Vec2_Input.y < 0)?
+                                                -1:
+                                                (Vec2_Input.y > 0)?
+                                                    +1:
+                                                    +0;   
+                        // Have Controls Been Flipped ? //
+                            R_Flt_MouseDir *= (O_Bool_IsFlipped) ? -1: +1;  
+                            R_Flt_MouseDir *= (O_Bool_IsFlipped) ? -1: +1;   
+                    }
                     public void OnStartedMoving(Vector2 Vec2_Input) 
                     {
                         // Stop If Dead //
                             if (R_Bool_IsDead) return;
+                        // Stop If Fallen //
+                            if (O_Bool_IsFallen) return;  
+                        // Stop If RotationLocked //
+                            if (R_Bool_IsRotationLocked) return;                          
                         // Proceed //
                             I_Bool_IsMovingX = true;
                             R_Int_CurrentInputMovementX = (Vec2_Input.x < 0)?
@@ -598,11 +749,18 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                                                             (Vec2_Input.y > 0)?
                                                               +1:
                                                               +0;
+                        // Have Controls Been Flipped ? //
+                            R_Int_CurrentInputMovementX *= (O_Bool_IsFlipped) ? -1: +1;  
+                            R_Int_CurrentInputMovementY *= (O_Bool_IsFlipped) ? -1: +1;  
                     }
                     public void OnStartedRotating(Vector2 Vec2_Input) 
                     {
                         // Stop If Dead //
                             if (R_Bool_IsDead) return;
+                        // Stop If Fallen //
+                            if (O_Bool_IsFallen) return;   
+                        // Stop If RotationLocked //
+                            if (R_Bool_IsRotationLocked) return;      
                         // Proceed //
                             R_Bool_IsRotating = true;
                             R_Int_CurrentInputRotationX = (Vec2_Input.x < 0)?
@@ -615,6 +773,9 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                                                             (Vec2_Input.y > 0)?
                                                               +1:
                                                               +0;
+                        // Have Controls Been Flipped ? //
+                            R_Int_CurrentInputRotationX *= (O_Bool_IsFlipped) ? -1: +1;  
+                            R_Int_CurrentInputRotationY *= (O_Bool_IsFlipped) ? -1: +1;  
                     }
                     public void OnStartedJumping() 
                     {
@@ -626,21 +787,79 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                             R_Bool_IsJumping = true;
                             ExecuteJump();
                     }
-                    public void OnStartedShooting() 
+                    public void OnStartedStraightShooting() 
+                    {
+                        // Stop If Dead //
+                            if (R_Bool_IsDead) return;
+                        // Proceed //
+                            if (!R_Bool_CanShoot) return;   
+                        // Player Type Logic //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant)
+                            {
+                                InstaKillAttempt(R_Ctm_Mse_Mouse.GetClosestPlayer());
+                            }
+                            else
+                            {
+                                ExecuteStraightShot(0);
+                            }
+                            StartCoroutine(ReenableShootingDelay(MasterManager.Instance.CharacterManager.ShootCooldown));
+                    }
+                    public void OnStartedCurvedShooting() 
+                    {
+                        // Stop If Dead //
+                            if (R_Bool_IsDead) return;
+                        // Proceed //
+                            if (!R_Bool_CanShoot) return;    
+                            if (R_E_PT_ClientType == PlayerType.Vigilant)
+                            {
+                                ExecuteStraightShot(Int_SkillIndex+1);
+                            }
+                            else
+                            {
+                                if (Int_ItemIndex > -1)
+                                ExecuteStraightShot(Int_ItemIndex+4);
+                                Int_ItemIndex = -1;
+                            }
+                            StartCoroutine(ReenableShootingDelay(MasterManager.Instance.CharacterManager.ShootCooldown));
+                    }
+                    public void OnStartedItemToggle() 
                     {
                         // Stop If Dead //
                             if (R_Bool_IsDead) return;
                         // Proceed //
                             if (!R_Bool_CanShoot) return;
-                            ExecuteShot();
+                        // Stop If RotationLocked //
+                            if (R_Bool_IsRotationLocked) return;      
+                            ExecuteCurvedShot();
+                            StartCoroutine(ReenableShootingDelay(MasterManager.Instance.CharacterManager.ShootCooldown));
+                    }
+                    public void OnStartedSkillToggle() 
+                    {
+                        // Stop If Dead //
+                            if (R_Bool_IsDead) return;
+                        // Proceed //
+                            if (!R_Bool_CanShoot) return;
+                        // Stop If RotationLocked //
+                            if (R_Bool_IsRotationLocked) return;      
+                            ExecuteCurvedShot();
                             StartCoroutine(ReenableShootingDelay(MasterManager.Instance.CharacterManager.ShootCooldown));
                     }
                 #endregion OnStarted
                 #region    OnStopped
+                    public void OnStoppedMouseMoving(Vector2 Vec2_Input) 
+                    {
+                        // Proceed //
+                            R_Flt_MouseDir = (Vec2_Input.y < 0)?
+                                                -1:
+                                                (Vec2_Input.y > 0)?
+                                                    +1:
+                                                    +0;   
+                        // Have Controls Been Flipped ? //
+                            R_Flt_MouseDir *= (O_Bool_IsFlipped) ? -1: +1;  
+                            R_Flt_MouseDir *= (O_Bool_IsFlipped) ? -1: +1;   
+                    }
                     public void OnStoppedMoving(Vector2 Vec2_Input) 
                     {
-                        // Stop If Dead //
-                            if (R_Bool_IsDead) return;
                         // Proceed //
                             I_Bool_IsMovingX = false;
                             R_Int_CurrentInputMovementX = (Vec2_Input.x < 0)?
@@ -653,12 +872,13 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                                                             -1:
                                                             (Vec2_Input.y > 0)?
                                                               +1:
-                                                              +0;         
+                                                              +0;   
+                        // Have Controls Been Flipped ? //
+                            R_Int_CurrentInputMovementX *= (O_Bool_IsFlipped) ? -1: +1;  
+                            R_Int_CurrentInputMovementY *= (O_Bool_IsFlipped) ? -1: +1;   
                     }
                     public void OnStoppedRotating(Vector2 Vec2_Input) 
                     {
-                        // Stop If Dead //
-                            if (R_Bool_IsDead) return;
                         // Proceed //
                             R_Bool_IsRotating = false;
                             R_Int_CurrentInputRotationX = (Vec2_Input.x < 0)?
@@ -671,6 +891,9 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                                                             (Vec2_Input.y > 0)?
                                                               +1:
                                                               +0;
+                        // Have Controls Been Flipped ? //
+                            R_Int_CurrentInputRotationX *= (O_Bool_IsFlipped) ? -1: +1;  
+                            R_Int_CurrentInputRotationY *= (O_Bool_IsFlipped) ? -1: +1;  
                     }
                     public void OnStoppedJumping() 
                     {
@@ -680,6 +903,12 @@ public class BasePlayer : MonoBehaviourPunCallbacks
             #endregion Callee Methods
         #endregion Listener Methods
         #region    Coroutines Methods
+            private System.Collections.IEnumerator SpeedPotions(float Flt_DelaySeconds, float Flt_Speed)
+            {
+                R_Flt_SpeedModifier = Mathf.Clamp(Flt_Speed, 0.1f, 2f);
+                yield return new WaitForSeconds(Flt_DelaySeconds);
+                R_Flt_SpeedModifier = 1;
+            }
             private System.Collections.IEnumerator RespawnDelay(float Flt_DelaySeconds)
             {
                 yield return new WaitForSeconds(Flt_DelaySeconds);
@@ -693,6 +922,269 @@ public class BasePlayer : MonoBehaviourPunCallbacks
 
                 R_Bool_CanShoot = true;
             }
+            private System.Collections.IEnumerator ReenableRotation()
+            {
+                R_Bool_IsRotationLocked = true;
+
+                yield return new WaitForSeconds(5f);
+
+                R_Bool_IsRotationLocked = false;
+
+                ReenableRelock();
+            }
+            private System.Collections.IEnumerator ReenableRelock()
+            {
+        
+                R_Bool_IsRotationLocked = false;
+
+                yield return new WaitForSeconds(10f);
+
+                R_Bool_IsRotationLocked = true;
+                MasterManager.Instance.CharacterManager.SpawnCharacter(IO_Int_ID);
+                ReenableRotation();
+            } 
+            private System.Collections.IEnumerator ResetFlipping(float Flt_DelaySeconds)
+            {
+                O_Bool_IsFlipped = true;
+
+                I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[2];
+
+                yield return new WaitForSeconds(Flt_DelaySeconds);
+
+                I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[1];
+        
+                O_Bool_IsFlipped = false;
+            }
+            private System.Collections.IEnumerator ResetFalling(float Flt_DelaySeconds)
+            {
+                O_Bool_IsFallen = true;
+        
+                I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[3];
+
+                yield return new WaitForSeconds(Flt_DelaySeconds);
+        
+                I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[4];
+
+                O_Bool_IsFallen = false;
+            }
         #endregion Coroutines Methods
-    #endregion Methods
+    #endregion Methods    
+
+    #region    External Classe Methods
+                public void OnHit(Collider Col_Hit)
+                {
+                    // Is Own Source? //
+                        if (Col_Hit.gameObject.layer == 8 && Col_Hit.TryGetComponent<BasePlayer>(out BasePlayer Ctm_BP_Target1)) 
+                        {
+                            if (Ctm_BP_Target1.ID != ID)
+                            { 
+                                ExecuteTagged();
+                            }
+                        }
+                    // Is Own's Child Source? //
+                        else
+                        if (Col_Hit.gameObject.layer == 8 && Col_Hit.transform.parent.gameObject.TryGetComponent<BasePlayer>(out BasePlayer Ctm_BP_Target2))
+                        {
+                            if (Ctm_BP_Target2.ID != ID)
+                            { 
+                                ExecuteTagged();
+                            }
+                        }
+                    // Pickapable? //
+                        else 
+                        if (Col_Hit.gameObject.layer == 9)
+                        { 
+                            if (Int_ItemIndex == -1)
+                                Int_ItemIndex = Col_Hit.GetComponent<Pickupable>().Type;
+                                Destroy(Col_Hit);
+/* ! */                     //Menu Update//
+                        }
+                    
+                }
+                public void PercieveContact(float Flt_FixedDT)
+                {
+                    // Variables //
+                        Bounds Bnds_Self = I_GObj_A1_BodyParts[0].gameObject.GetComponent<MeshCollider>().bounds;
+                        Collider[] Col_A1_HitBuffer = new Collider[10];
+                        int Int_Count  = Physics.OverlapBoxNonAlloc(
+                                                                        Bnds_Self.center,
+                                                                        Bnds_Self.extents,
+                                                                        Col_A1_HitBuffer,
+                                                                        transform.rotation,
+                                                                        I_LyrM_CollisionLayers
+                                                                   );
+                    // Collisions //
+                        foreach (Collider Col_Hit in Col_A1_HitBuffer)
+                        {
+                            // Ignore Own Collision //
+                                if (Col_Hit == this.gameObject.GetComponent<MeshCollider>()) continue;
+                            // Ignore null //
+                                if (Col_Hit == null) continue;
+                            // Compute Overlap //
+                                bool Bool_IsOverlapping = Physics.ComputePenetration(
+                                                                                        // In //
+                                                                                            this.gameObject.GetComponent<MeshCollider>(),
+                                                                                            this.gameObject.GetComponent<MeshCollider>().transform.position,
+                                                                                            this.gameObject.GetComponent<MeshCollider>().transform.rotation,
+                                                                                            Col_Hit,
+                                                                                            Col_Hit.transform.position,
+                                                                                            Col_Hit.transform.rotation,
+                                                                                        // Out //
+                                                                                            out Vector3 Vec3_Dir,
+                                                                                            out float Flt_OverlappingDistance
+                                                                                    );
+                                if ( Bool_IsOverlapping )
+                                { 
+                                    OnHit(Col_Hit);
+                                }
+                        }
+                }
+        #region    Coroutines Methods
+            #region    All
+                public void HijackPush(Vector3 Vec3_Dir, float Flt_Force)  
+                {
+                    // Doesn't Affects Vigilant //
+                        if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                    // Proceed //
+                        this.GetComponent<Rigidbody>().AddForce(Vec3_Dir * Flt_Force, ForceMode.Impulse);
+                        Debug.Log("Pushed");
+                }
+            #endregion All
+            #region    Vigilant
+                #region    
+                #endregion 
+                #region    Damage Type
+/* ! */             public void ExecuteTagged()  
+                    {
+                        // Only Affects Vigilant //
+                            if (R_E_PT_ClientType != PlayerType.Vigilant) return;
+                        // Proceed //
+                            Debug.Log("Tagged: Game Over");
+                    }
+                #endregion Damage Type
+                #region    Hijack Type
+                    public void ToggleSkill()
+                    {
+                        // Only Affects Vigilant //
+                            if (R_E_PT_ClientType != PlayerType.Vigilant) return;
+                        // Proceed //
+                            Int_SkillIndex = (Int_SkillIndex + 1 == 3) ? 0 : Int_SkillIndex + 1;
+/* ! */                     //Menu Update//
+                    }
+                    public void HijackBomb(Vector3 Vec3_Source, float Flt_Force, float Flt_Radius, float Flt_Upward)  
+                    {
+                        // Doesn't Affects Vigilant //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                        // Proceed //
+                            this.GetComponent<Rigidbody>().AddExplosionForce(Flt_Force, Vec3_Source, Flt_Radius, Flt_Upward, ForceMode.Impulse);
+                            Debug.Log("Bombed");
+                    }
+                    public void HijackFlip(float Flt_DelaySeconds)  
+                    {
+                        // Doesn't Affects Vigilant //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                        // Exit ? //
+                            if (O_Bool_IsFlipped == false) return;
+                        // Proceed //
+                            ResetFlipping(Flt_DelaySeconds);
+                            Debug.Log("Flipped");
+                    }
+/* ! */             public void HijackFreeze()  
+                    {
+                        // Doesn't Affects Vigilant //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                        // Proceed //
+                            // Physical MATERIAL //
+                            Debug.Log("Freeze");
+                    }
+                    public void InstaKillAttempt(BasePlayer BP_Target)  
+                    {
+                        // Doesn't Affects Vigilant //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                        // Proceed //
+                            if (R_Ctm_SS_SightSensor.IsEnemyVisible(BP_Target.transform))
+                            {
+                                BP_Target.ExecuteInstaDeath();
+                            }
+                            else
+                            {
+                                ForceResetRotationLock();
+                            }
+                            Debug.Log("Insta Kill Attempted");
+                    }
+                #endregion Hijack Type
+                #region    Reset Type
+                    public void ForceResetRotationLock()
+                    {
+                        // Proceed //
+                            MasterManager.Instance.CharacterManager.SpawnCharacter(IO_Int_ID);
+                            R_Bool_IsRotationLocked = true;
+                    }
+                #endregion Reset Type
+            #endregion Vigilant
+            #region    Chaser
+                #region    
+                #endregion 
+                #region    Damage Type
+                    public void ExecuteDamage(float Flt_Damage)
+                    {
+                        // Doesn't Affect Vigilant //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                        // Proceed //
+                            IO_Flt_Health = Mathf.Max(0.0f, IO_Flt_Health - Flt_Damage);
+                            if (IO_Flt_Health <= 0) MasterManager.Instance.CharacterManager.KillCharacter(IO_Int_ID);
+                    }
+                    public void ExecuteInstaDeath()
+                    {
+                        // Doesn't Affect Vigilant //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                        // Proceed //
+                            IO_Flt_Health = 0;
+                            MasterManager.Instance.CharacterManager.KillCharacter(IO_Int_ID);
+                    }
+                #endregion Damage Type
+                #region    Item Type
+                    public void DestroyFromInventory()
+                    {
+                        // Doesn't Affect Vigilant //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                        // Proceed //
+                            Int_ItemIndex = -1;
+/* ! */                     //Menu Update//
+                    }
+                #endregion Item Type
+                #region    Hijack Type
+                    public void ExecuteFlip()
+                    {
+                        // Doesn't Affect Vigilant //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                        // Proceed //
+                            ResetFlipping(I_Flt_ControlFlipSeconds);
+                    }
+                    public void ExecuteFalling()
+                    {
+                        // Doesn't Affect Vigilant //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                        // Proceed //
+                            ResetFalling(I_Flt_FallStateSeconds);
+                    }
+                    public void UsePotion(float Flt_DelaySeconds, float Flt_Speed)
+                    {
+                        // Doesn't Affect Vigilant //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                        // Exit ? //
+                            if (R_Flt_SpeedModifier != 1) return;
+                        // Proceed //
+                            SpeedPotions(Flt_DelaySeconds, Flt_Speed);
+                    }
+/* ! */             public void UseBanana()
+                    {
+                        // Doesn't Affect Vigilant //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant) return;
+                        // Proceed //
+                    }
+                #endregion Hijack Type
+            #endregion Chaser
+        #endregion Coroutines Methods
+    #endregion External Classe Methods
 }

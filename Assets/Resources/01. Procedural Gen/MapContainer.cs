@@ -27,6 +27,7 @@ public class MapContainer : MonoBehaviourPunCallbacks
                 private const string BulletPos_KEY = "BulletPos";
                 private const string BulletQuat_KEY = "BulletQuat";
                 private const string BulletDir_KEY = "BulletDir";
+                private const string BulletType_KEY = "BulletType";
         #endregion Hashtables (Communication among instances)
     #endregion Variables
     #region    Methods
@@ -133,7 +134,8 @@ public class MapContainer : MonoBehaviourPunCallbacks
                             Hsh_Input.ContainsKey(BulletOwnerName_KEY) &&
                             Hsh_Input.ContainsKey(BulletPos_KEY)       &&
                             Hsh_Input.ContainsKey(BulletQuat_KEY)      &&
-                            Hsh_Input.ContainsKey(BulletDir_KEY)
+                            Hsh_Input.ContainsKey(BulletDir_KEY)       &&
+                            Hsh_Input.ContainsKey(BulletType_KEY)       
                            )
                         { 
                             return true; 
@@ -230,7 +232,8 @@ public class MapContainer : MonoBehaviourPunCallbacks
                                                                                      (int)Hsh_Input[BulletOwnerID_KEY],
                                                                                      (Vector3)Hsh_Input[BulletPos_KEY], 
                                                                                      (Quaternion)Hsh_Input[BulletQuat_KEY], 
-                                                                                     (Vector3)Hsh_Input[BulletDir_KEY]
+                                                                                     (Vector3)Hsh_Input[BulletDir_KEY],
+                                                                                     (int)Hsh_Input[BulletType_KEY]
                                                                                     );
                             }
                         }

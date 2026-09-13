@@ -22,7 +22,9 @@ public class CustomInputManager : BaseManager<CharacterManager>
             }
         #endregion Unity Methods
         #region    Override Methods
+            #pragma warning disable CS1998
             public async override void OnStartUp()
+            #pragma warning restore CS1998
             {
                 // Resume Base //
                     base.OnStartUp();
@@ -60,6 +62,11 @@ public class CustomInputManager : BaseManager<CharacterManager>
                                 IAA_Player.Move.performed += OnMoveKeyPressed;
                                 IAA_Player.Move.canceled -= OnMoveKeyCancelled;
                                 IAA_Player.Move.canceled += OnMoveKeyCancelled;
+                            // Move //
+                                IAA_Player.MouseMove.performed -= OnMouseMoveKeyPressed;
+                                IAA_Player.MouseMove.performed += OnMouseMoveKeyPressed;
+                                IAA_Player.MouseMove.canceled -= OnMouseMoveKeyCancelled;
+                                IAA_Player.MouseMove.canceled += OnMouseMoveKeyCancelled;
                             // Rotate //
                                 IAA_Player.Rotate.performed -= OnRotateKeyPressed;
                                 IAA_Player.Rotate.performed += OnRotateKeyPressed;
@@ -71,16 +78,26 @@ public class CustomInputManager : BaseManager<CharacterManager>
                                 IAA_Player.Jump.canceled -= OnJumpKeyCancelled;
                                 IAA_Player.Jump.canceled += OnJumpKeyCancelled;
                             // Shoot //
-                                IAA_Player.Shoot.performed -= OnShootKeyPressed;
-                                IAA_Player.Shoot.performed += OnShootKeyPressed;
+                                // Straight //
+                                    IAA_Player.StraightShoot.performed -= OnShootKeyPressed;
+                                    IAA_Player.StraightShoot.performed += OnShootKeyPressed;
+                                // Curved //
+                                    IAA_Player.CurvedShoot.performed -= OnCurvedShootKeyPressed;
+                                    IAA_Player.CurvedShoot.performed += OnCurvedShootKeyPressed;
+                            // Item //
+                                IAA_Player.DestroyItem.performed -= OnPauseKeyPressed;
+                                IAA_Player.DestroyItem.performed += OnPauseKeyPressed;
+                            // Skill //
+                                IAA_Player.ToggleSkill.performed -= OnPauseKeyPressed;
+                                IAA_Player.ToggleSkill.performed += OnPauseKeyPressed;
                             // Pause //
                                 IAA_Player.Pause.performed -= OnPauseKeyPressed;
                                 IAA_Player.Pause.performed += OnPauseKeyPressed;
                             // ScoreBoard //
-                                IAA_Player.Shoot.performed -= OnScoreBoardKeyPressed;
-                                IAA_Player.Shoot.performed += OnScoreBoardKeyPressed;
-                                IAA_Player.Shoot.canceled -= OnScoreBoardKeyCancelled;
-                                IAA_Player.Shoot.canceled += OnScoreBoardKeyCancelled;
+                                //IAA_Player.Shoot.performed -= OnScoreBoardKeyPressed;
+                                //IAA_Player.Shoot.performed += OnScoreBoardKeyPressed;
+                                //IAA_Player.Shoot.canceled -= OnScoreBoardKeyCancelled;
+                                //IAA_Player.Shoot.canceled += OnScoreBoardKeyCancelled;
                             // Chat //
                                 IAA_Player.Chat.performed -= OnChatKeyPressed;
                                 IAA_Player.Chat.performed += OnChatKeyPressed;
@@ -107,6 +124,13 @@ public class CustomInputManager : BaseManager<CharacterManager>
                             // Action //
                                 MasterManager.Instance.CharacterManager.OwnPlayer.OnStartedMoving(IACbC_Context.ReadValue<Vector2>());
                         }
+                        public void OnMouseMoveKeyPressed(InputAction.CallbackContext IACbC_Context) 
+                        {
+                            // Is In Proper Scene? //
+                                if (SceneManager.GetActiveScene().buildIndex != 1) return;
+                            // Action //
+                                MasterManager.Instance.CharacterManager.OwnPlayer.OnStartedMouseMoving(IACbC_Context.ReadValue<Vector2>());
+                        }
                         public void OnRotateKeyPressed(InputAction.CallbackContext IACbC_Context)
                         {
                             // Is In Proper Scene? //
@@ -126,7 +150,14 @@ public class CustomInputManager : BaseManager<CharacterManager>
                             // Is In Proper Scene? //
                                 if (SceneManager.GetActiveScene().buildIndex != 1) return;
                             // Action //
-                               MasterManager.Instance.CharacterManager.OwnPlayer.OnStartedShooting(); 
+                               MasterManager.Instance.CharacterManager.OwnPlayer.OnStartedStraightShooting(); 
+                        }
+                        public void OnCurvedShootKeyPressed(InputAction.CallbackContext IACbC_Context)
+                        {
+                            // Is In Proper Scene? //
+                                if (SceneManager.GetActiveScene().buildIndex != 1) return;
+                            // Action //
+                               MasterManager.Instance.CharacterManager.OwnPlayer.OnStartedCurvedShooting(); 
                         }
                         public void OnPauseKeyPressed(InputAction.CallbackContext IACbC_Context)
                         {
@@ -183,7 +214,21 @@ public class CustomInputManager : BaseManager<CharacterManager>
                                 if (SceneManager.GetActiveScene().buildIndex != 1) return;
                             // Action //
                                MasterManager.Instance.CharacterManager.OwnPlayer.ExecuteDamage(200f);                            
-                        }    
+                        }   
+                        public void OnDestroyItemKeyPressed(InputAction.CallbackContext IACbC_Context)
+                        {
+                            // Is In Proper Scene? //
+                                if (SceneManager.GetActiveScene().buildIndex != 1) return;
+                            // Action //
+                               MasterManager.Instance.CharacterManager.OwnPlayer.DestroyFromInventory();                            
+                        }  
+                        public void OnToggleSkillKeyPressed(InputAction.CallbackContext IACbC_Context)
+                        {
+                            // Is In Proper Scene? //
+                                if (SceneManager.GetActiveScene().buildIndex != 1) return;
+                            // Action //
+                               MasterManager.Instance.CharacterManager.OwnPlayer.ToggleSkill();                            
+                        }   
                     // Cancelled //
                         public void OnMoveKeyCancelled(InputAction.CallbackContext IACbC_Context) 
                         {
@@ -191,6 +236,13 @@ public class CustomInputManager : BaseManager<CharacterManager>
                                 if (SceneManager.GetActiveScene().buildIndex != 1) return;
                             // Action //
                                 MasterManager.Instance.CharacterManager.OwnPlayer.OnStoppedMoving(IACbC_Context.ReadValue<Vector2>());
+                        }
+                        public void OnMouseMoveKeyCancelled(InputAction.CallbackContext IACbC_Context) 
+                        {
+                            // Is In Proper Scene? //
+                                if (SceneManager.GetActiveScene().buildIndex != 1) return;
+                            // Action //
+                                MasterManager.Instance.CharacterManager.OwnPlayer.OnStoppedMouseMoving(IACbC_Context.ReadValue<Vector2>());
                         }
                         public void OnRotateKeyCancelled(InputAction.CallbackContext IACbC_Context)
                         {

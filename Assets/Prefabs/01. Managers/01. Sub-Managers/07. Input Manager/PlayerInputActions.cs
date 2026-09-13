@@ -102,6 +102,15 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
+                    ""name"": ""MouseMove"",
+                    ""type"": ""Value"",
+                    ""id"": ""18be03f9-aaa3-473d-8c56-45b5c6ba6023"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": ""Press"",
+                    ""initialStateCheck"": true
+                },
+                {
                     ""name"": ""Rotate"",
                     ""type"": ""PassThrough"",
                     ""id"": ""e583c714-2465-4532-bf84-136bf35a6d63"",
@@ -111,9 +120,18 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""Shoot"",
+                    ""name"": ""StraightShoot"",
                     ""type"": ""Value"",
                     ""id"": ""e1d896f9-98d6-46a8-ba1d-1897410cc9a0"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": ""Press(behavior=1)"",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""CurvedShoot"",
+                    ""type"": ""Value"",
+                    ""id"": ""396e2cd9-09a2-4b39-aabf-a9726419829a"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": ""Press(behavior=1)"",
@@ -156,6 +174,24 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
+                    ""name"": ""DestroyItem"",
+                    ""type"": ""Value"",
+                    ""id"": ""64660106-b919-4acc-868b-3207ae0b8f60"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": ""Press"",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""ToggleSkill"",
+                    ""type"": ""Value"",
+                    ""id"": ""e57c1954-8816-4c7e-b14b-99d25a6d8abd"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": ""Press"",
+                    ""initialStateCheck"": true
+                },
+                {
                     ""name"": ""Debug"",
                     ""type"": ""Value"",
                     ""id"": ""0d7e011b-4785-4a39-8663-d46f89c35d32"",
@@ -173,7 +209,18 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Shoot"",
+                    ""action"": ""StraightShoot"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""dce4e4a2-97d9-4db4-93d7-1762ced6e55e"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CurvedShoot"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -224,11 +271,44 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""f66a348b-5b7a-4845-8f73-0b4b73331b1c"",
-                    ""path"": ""<Keyboard>/q"",
+                    ""path"": ""<Keyboard>/p"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Debug"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""35ac8f3d-39b3-469c-8ebf-7b1b670a0c34"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""DestroyItem"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b38a4cb4-36c1-4c9c-a2b9-e3b3acf6a89e"",
+                    ""path"": ""<Mouse>/scroll"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MouseMove"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""cd451b5b-2f61-46d3-86bf-c6604f88d7e9"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleSkill"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -378,12 +458,16 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
+        m_Player_MouseMove = m_Player.FindAction("MouseMove", throwIfNotFound: true);
         m_Player_Rotate = m_Player.FindAction("Rotate", throwIfNotFound: true);
-        m_Player_Shoot = m_Player.FindAction("Shoot", throwIfNotFound: true);
+        m_Player_StraightShoot = m_Player.FindAction("StraightShoot", throwIfNotFound: true);
+        m_Player_CurvedShoot = m_Player.FindAction("CurvedShoot", throwIfNotFound: true);
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
         m_Player_Pause = m_Player.FindAction("Pause", throwIfNotFound: true);
         m_Player_Scoreboard = m_Player.FindAction("Scoreboard", throwIfNotFound: true);
         m_Player_Chat = m_Player.FindAction("Chat", throwIfNotFound: true);
+        m_Player_DestroyItem = m_Player.FindAction("DestroyItem", throwIfNotFound: true);
+        m_Player_ToggleSkill = m_Player.FindAction("ToggleSkill", throwIfNotFound: true);
         m_Player_Debug = m_Player.FindAction("Debug", throwIfNotFound: true);
         // Chat
         m_Chat = asset.FindActionMap("Chat", throwIfNotFound: true);
@@ -393,7 +477,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     ~@PlayerInputActions()
     {
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, PlayerInputActions.Player.Disable() has not been called.");
-        //UnityEngine.Debug.Assert(!m_Chat.enabled, "This will cause a leak and performance issues, PlayerInputActions.Chat.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_Chat.enabled, "This will cause a leak and performance issues, PlayerInputActions.Chat.Disable() has not been called.");
     }
 
     /// <summary>
@@ -470,12 +554,16 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Player;
     private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
     private readonly InputAction m_Player_Move;
+    private readonly InputAction m_Player_MouseMove;
     private readonly InputAction m_Player_Rotate;
-    private readonly InputAction m_Player_Shoot;
+    private readonly InputAction m_Player_StraightShoot;
+    private readonly InputAction m_Player_CurvedShoot;
     private readonly InputAction m_Player_Jump;
     private readonly InputAction m_Player_Pause;
     private readonly InputAction m_Player_Scoreboard;
     private readonly InputAction m_Player_Chat;
+    private readonly InputAction m_Player_DestroyItem;
+    private readonly InputAction m_Player_ToggleSkill;
     private readonly InputAction m_Player_Debug;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
@@ -493,13 +581,21 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Move => m_Wrapper.m_Player_Move;
         /// <summary>
+        /// Provides access to the underlying input action "Player/MouseMove".
+        /// </summary>
+        public InputAction @MouseMove => m_Wrapper.m_Player_MouseMove;
+        /// <summary>
         /// Provides access to the underlying input action "Player/Rotate".
         /// </summary>
         public InputAction @Rotate => m_Wrapper.m_Player_Rotate;
         /// <summary>
-        /// Provides access to the underlying input action "Player/Shoot".
+        /// Provides access to the underlying input action "Player/StraightShoot".
         /// </summary>
-        public InputAction @Shoot => m_Wrapper.m_Player_Shoot;
+        public InputAction @StraightShoot => m_Wrapper.m_Player_StraightShoot;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/CurvedShoot".
+        /// </summary>
+        public InputAction @CurvedShoot => m_Wrapper.m_Player_CurvedShoot;
         /// <summary>
         /// Provides access to the underlying input action "Player/Jump".
         /// </summary>
@@ -516,6 +612,14 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Chat".
         /// </summary>
         public InputAction @Chat => m_Wrapper.m_Player_Chat;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/DestroyItem".
+        /// </summary>
+        public InputAction @DestroyItem => m_Wrapper.m_Player_DestroyItem;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/ToggleSkill".
+        /// </summary>
+        public InputAction @ToggleSkill => m_Wrapper.m_Player_ToggleSkill;
         /// <summary>
         /// Provides access to the underlying input action "Player/Debug".
         /// </summary>
@@ -549,12 +653,18 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
+            @MouseMove.started += instance.OnMouseMove;
+            @MouseMove.performed += instance.OnMouseMove;
+            @MouseMove.canceled += instance.OnMouseMove;
             @Rotate.started += instance.OnRotate;
             @Rotate.performed += instance.OnRotate;
             @Rotate.canceled += instance.OnRotate;
-            @Shoot.started += instance.OnShoot;
-            @Shoot.performed += instance.OnShoot;
-            @Shoot.canceled += instance.OnShoot;
+            @StraightShoot.started += instance.OnStraightShoot;
+            @StraightShoot.performed += instance.OnStraightShoot;
+            @StraightShoot.canceled += instance.OnStraightShoot;
+            @CurvedShoot.started += instance.OnCurvedShoot;
+            @CurvedShoot.performed += instance.OnCurvedShoot;
+            @CurvedShoot.canceled += instance.OnCurvedShoot;
             @Jump.started += instance.OnJump;
             @Jump.performed += instance.OnJump;
             @Jump.canceled += instance.OnJump;
@@ -567,6 +677,12 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Chat.started += instance.OnChat;
             @Chat.performed += instance.OnChat;
             @Chat.canceled += instance.OnChat;
+            @DestroyItem.started += instance.OnDestroyItem;
+            @DestroyItem.performed += instance.OnDestroyItem;
+            @DestroyItem.canceled += instance.OnDestroyItem;
+            @ToggleSkill.started += instance.OnToggleSkill;
+            @ToggleSkill.performed += instance.OnToggleSkill;
+            @ToggleSkill.canceled += instance.OnToggleSkill;
             @Debug.started += instance.OnDebug;
             @Debug.performed += instance.OnDebug;
             @Debug.canceled += instance.OnDebug;
@@ -584,12 +700,18 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
+            @MouseMove.started -= instance.OnMouseMove;
+            @MouseMove.performed -= instance.OnMouseMove;
+            @MouseMove.canceled -= instance.OnMouseMove;
             @Rotate.started -= instance.OnRotate;
             @Rotate.performed -= instance.OnRotate;
             @Rotate.canceled -= instance.OnRotate;
-            @Shoot.started -= instance.OnShoot;
-            @Shoot.performed -= instance.OnShoot;
-            @Shoot.canceled -= instance.OnShoot;
+            @StraightShoot.started -= instance.OnStraightShoot;
+            @StraightShoot.performed -= instance.OnStraightShoot;
+            @StraightShoot.canceled -= instance.OnStraightShoot;
+            @CurvedShoot.started -= instance.OnCurvedShoot;
+            @CurvedShoot.performed -= instance.OnCurvedShoot;
+            @CurvedShoot.canceled -= instance.OnCurvedShoot;
             @Jump.started -= instance.OnJump;
             @Jump.performed -= instance.OnJump;
             @Jump.canceled -= instance.OnJump;
@@ -602,6 +724,12 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Chat.started -= instance.OnChat;
             @Chat.performed -= instance.OnChat;
             @Chat.canceled -= instance.OnChat;
+            @DestroyItem.started -= instance.OnDestroyItem;
+            @DestroyItem.performed -= instance.OnDestroyItem;
+            @DestroyItem.canceled -= instance.OnDestroyItem;
+            @ToggleSkill.started -= instance.OnToggleSkill;
+            @ToggleSkill.performed -= instance.OnToggleSkill;
+            @ToggleSkill.canceled -= instance.OnToggleSkill;
             @Debug.started -= instance.OnDebug;
             @Debug.performed -= instance.OnDebug;
             @Debug.canceled -= instance.OnDebug;
@@ -749,6 +877,13 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMove(InputAction.CallbackContext context);
         /// <summary>
+        /// Method invoked when associated input action "MouseMove" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnMouseMove(InputAction.CallbackContext context);
+        /// <summary>
         /// Method invoked when associated input action "Rotate" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -756,12 +891,19 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRotate(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Shoot" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "StraightShoot" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnShoot(InputAction.CallbackContext context);
+        void OnStraightShoot(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "CurvedShoot" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCurvedShoot(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "Jump" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
@@ -790,6 +932,20 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnChat(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "DestroyItem" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnDestroyItem(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ToggleSkill" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnToggleSkill(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "Debug" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

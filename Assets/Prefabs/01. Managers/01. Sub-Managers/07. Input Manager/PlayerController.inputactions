@@ -16,6 +16,15 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "MouseMove",
+                    "type": "Value",
+                    "id": "18be03f9-aaa3-473d-8c56-45b5c6ba6023",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Rotate",
                     "type": "PassThrough",
                     "id": "e583c714-2465-4532-bf84-136bf35a6d63",
@@ -25,9 +34,18 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Shoot",
+                    "name": "StraightShoot",
                     "type": "Value",
                     "id": "e1d896f9-98d6-46a8-ba1d-1897410cc9a0",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press(behavior=1)",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "CurvedShoot",
+                    "type": "Value",
+                    "id": "396e2cd9-09a2-4b39-aabf-a9726419829a",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "Press(behavior=1)",
@@ -70,6 +88,24 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "DestroyItem",
+                    "type": "Value",
+                    "id": "64660106-b919-4acc-868b-3207ae0b8f60",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "ToggleSkill",
+                    "type": "Value",
+                    "id": "e57c1954-8816-4c7e-b14b-99d25a6d8abd",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Debug",
                     "type": "Value",
                     "id": "0d7e011b-4785-4a39-8663-d46f89c35d32",
@@ -87,7 +123,18 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Shoot",
+                    "action": "StraightShoot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "dce4e4a2-97d9-4db4-93d7-1762ced6e55e",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CurvedShoot",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -138,11 +185,44 @@
                 {
                     "name": "",
                     "id": "f66a348b-5b7a-4845-8f73-0b4b73331b1c",
-                    "path": "<Keyboard>/q",
+                    "path": "<Keyboard>/p",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "Debug",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "35ac8f3d-39b3-469c-8ebf-7b1b670a0c34",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DestroyItem",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b38a4cb4-36c1-4c9c-a2b9-e3b3acf6a89e",
+                    "path": "<Mouse>/scroll",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "MouseMove",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "cd451b5b-2f61-46d3-86bf-c6604f88d7e9",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleSkill",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

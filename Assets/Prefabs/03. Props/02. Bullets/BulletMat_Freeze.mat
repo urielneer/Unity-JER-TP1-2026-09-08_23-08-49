@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: BulletMat
+  m_Name: BulletMat_Freeze
   m_Shader: {fileID: -6465566751694194690, guid: d9699324d1289584ba5c3490855c0311, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -40,7 +40,8 @@ Material:
     m_Floats:
     - _QueueControl: 0
     - _QueueOffset: 0
-    m_Colors: []
+    m_Colors:
+    - _Color: {r: 0.2460395, g: 0.9150943, b: 0.908863, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &224489180755259817

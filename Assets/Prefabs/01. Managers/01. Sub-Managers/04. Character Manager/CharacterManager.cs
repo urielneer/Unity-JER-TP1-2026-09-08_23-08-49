@@ -4,12 +4,18 @@ using Photon.Realtime;
 using UnityEngine.SceneManagement;
 using static CustomExtension.ArrayExtensions;
 
+
 #region    "using" Script Clarification
     using Hashtable = ExitGames.Client.Photon.Hashtable;
 #endregion "using" Script Clarification
+#region    Enums
+    public enum PlayerType { Vigilant, Chaser };
+#endregion Enums
 public class CharacterManager : BaseManager<CharacterManager>
 {
     #region    Variables
+            PlayerType IO_E_PT_ClientType;
+            public PlayerType ClientType => IO_E_PT_ClientType;
         [Header(" All Character Settings")]
             [SerializeField] float _maxHealth;
             float IO_Flt_MaxHealth;
@@ -42,7 +48,9 @@ public class CharacterManager : BaseManager<CharacterManager>
             }
         #endregion Unity Methods
         #region    Override Methods
+            #pragma warning disable CS1998
             public async override void OnStartUp()
+            #pragma warning restore CS1998
             {
                 // Resume Base //
                     base.OnStartUp();
@@ -58,9 +66,9 @@ public class CharacterManager : BaseManager<CharacterManager>
                                 Vector3 Vec3_Pos = Vector3.zero;
                                 Quaternion Quat_Rot = Quaternion.identity;
                             // Spawn Player //
-                                BasePlayer Ctm_BP_Own = (PhotonNetwork.Instantiate("Tank_Master", Vec3_Pos, Quat_Rot)).GetComponent<BasePlayer>();
+                                BasePlayer Ctm_BP_Own = (PhotonNetwork.Instantiate("02. Player/Player_Master", Vec3_Pos, Quat_Rot)).GetComponent<BasePlayer>();
                                 O_Ctm_BP_OwnPlayer = Ctm_BP_Own;
-                                Ctm_BP_Own.SetData(PhotonNetwork.LocalPlayer.NickName, Ctm_BP_Own.GetComponent<PhotonView>().ViewID, IO_Flt_MaxHealth);
+                                Ctm_BP_Own.SetData(PhotonNetwork.LocalPlayer.NickName, Ctm_BP_Own.GetComponent<PhotonView>().ViewID, IO_Flt_MaxHealth, IO_E_PT_ClientType);
                                 O_Ctm_BP_OwnPlayer.OnStartUp();
                             // MapManager - Container //
                                 I_Trfm_MapContainer = (Object.FindFirstObjectByType<MapContainer>()).gameObject.transform;

@@ -27,6 +27,7 @@ public class BulletManager : BaseManager<BulletManager>
             private const string BulletPos_KEY = "BulletPos";
             private const string BulletQuat_KEY = "BulletQuat";
             private const string BulletDir_KEY = "BulletDir";
+            private const string BulletType_KEY = "BulletType";
         #endregion Hashtables (Communication among instances)
     #endregion Variables
     #region    Methods
@@ -86,20 +87,20 @@ public class BulletManager : BaseManager<BulletManager>
             }
         #endregion Override Methods
         #region    Custom Methods
-            public void SpawnBullet(string Str_OwnerNickname, int Int_ID, Vector3 Vec3_Pos, Quaternion Quat_Rot, Vector3 Vec3_Dir)
+            public void SpawnBullet(string Str_OwnerNickname, int Int_ID, Vector3 Vec3_Pos, Quaternion Quat_Rot, Vector3 Vec3_Dir, int Int_Type)
             {
                 #region    Spawn
                     // Spawn Bullet //
                         Bullet Ctm_Bllt_Own = (Instantiate(I_Ctm_Bllt_Prefab, Vec3_Pos, Quat_Rot)).GetComponent<Bullet>();
                     // Setup Bullets Dir & Speed //
-                        Ctm_Bllt_Own.SetData(Str_OwnerNickname, Int_ID, Vec3_Dir, I_Flt_Speed, I_Flt_Damage);
+                        Ctm_Bllt_Own.SetData(Str_OwnerNickname, Int_ID, Vec3_Dir, I_Flt_Speed, I_Flt_Damage, Int_Type);
                     // Start Up // 
                         Ctm_Bllt_Own.OnStartUp();
                     // MapManager - Container //
                         Ctm_Bllt_Own.gameObject.transform.SetParent(I_Trfm_MapContainer, true);
                 #endregion Spawn
             }
-            public void SynchronizeBullet(BasePlayer Ctm_BP_Owner, Vector3 Vec3_Dir)
+            public void SynchronizeBullet(BasePlayer Ctm_BP_Owner, Vector3 Vec3_Dir, int Int_Index = 0)
             {
                 // Variables //
                     Transform Tfm_SpawnSource = Ctm_BP_Owner.CanonAnchor;
@@ -113,6 +114,7 @@ public class BulletManager : BaseManager<BulletManager>
                         { BulletPos_KEY       , Vec3_Pos                   },
                         { BulletQuat_KEY      , Quat_Rot                   },
                         { BulletDir_KEY       , Vec3_Dir                   },
+                        { BulletType_KEY      , Int_Index                   },
                     }; 
                     I_Trfm_MapContainer.GetComponent<MapContainer>().UpdateAllBulletManagers(Hsh_MapKeys);
             }

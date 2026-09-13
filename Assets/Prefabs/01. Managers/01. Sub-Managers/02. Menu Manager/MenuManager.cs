@@ -22,7 +22,9 @@ public class MenuManager : BaseManager<CharacterManager>
             }
         #endregion Unity Methods
         #region    Override Methods
+            #pragma warning disable CS1998
             public async override void OnStartUp()
+            #pragma warning restore CS1998
             {
                 // Resume Base //
                     base.OnStartUp();

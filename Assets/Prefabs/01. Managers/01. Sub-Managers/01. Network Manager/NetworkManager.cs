@@ -29,7 +29,9 @@ public class NetworkManager : BaseManager<NetworkManager>
             }
         #endregion Unity Methods
         #region    Override Methods
+            #pragma warning disable CS1998
             public async override void OnStartUp()
+            #pragma warning restore CS1998
             {
                 if (!IsStatusOn)
                 {
