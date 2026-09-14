@@ -85,11 +85,11 @@ public class CustomInputManager : BaseManager<CharacterManager>
                                     IAA_Player.CurvedShoot.performed -= OnCurvedShootKeyPressed;
                                     IAA_Player.CurvedShoot.performed += OnCurvedShootKeyPressed;
                             // Item //
-                                IAA_Player.DestroyItem.performed -= OnPauseKeyPressed;
-                                IAA_Player.DestroyItem.performed += OnPauseKeyPressed;
+                                IAA_Player.DestroyItem.performed -= OnDestroyItemKeyPressed;
+                                IAA_Player.DestroyItem.performed += OnDestroyItemKeyPressed;
                             // Skill //
-                                IAA_Player.ToggleSkill.performed -= OnPauseKeyPressed;
-                                IAA_Player.ToggleSkill.performed += OnPauseKeyPressed;
+                                IAA_Player.ToggleSkill.performed -= OnToggleSkillKeyPressed;
+                                IAA_Player.ToggleSkill.performed += OnToggleSkillKeyPressed;
                             // Pause //
                                 IAA_Player.Pause.performed -= OnPauseKeyPressed;
                                 IAA_Player.Pause.performed += OnPauseKeyPressed;
@@ -213,7 +213,7 @@ public class CustomInputManager : BaseManager<CharacterManager>
                             // Is In Proper Scene? //
                                 if (SceneManager.GetActiveScene().buildIndex != 1) return;
                             // Action //
-                               MasterManager.Instance.CharacterManager.OwnPlayer.ExecuteDamage(200f);                            
+                               MasterManager.Instance.CharacterManager.DamageCharacter(MasterManager.Instance.CharacterManager.OwnPlayer.ID, 200f);
                         }   
                         public void OnDestroyItemKeyPressed(InputAction.CallbackContext IACbC_Context)
                         {

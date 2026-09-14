@@ -107,7 +107,7 @@ public class Bullet : MonoBehaviourPunCallbacks
                                 {
                                     Vector3 spawnPos = new Vector3(transform.position.x, 0.05f, transform.position.z);
                                     Instantiate(icePrefab, spawnPos, Quaternion.identity);
-                                    Debug.Log("[Hielo Spawneado con éxito en: " + spawnPos + "]");
+                                    Debug.Log("[Hielo Spawneado con ï¿½xito en: " + spawnPos + "]");
                                 }
                             }
 
@@ -141,6 +141,24 @@ public class Bullet : MonoBehaviourPunCallbacks
     #endregion Methods
 
     #region    External Classe Methods
+    // Solo el cliente que disparo dispara la parte de red, si no se duplica por cada copia local de la bala //
+    private bool IsOwnerLocal()
+    {
+        if (MasterManager.Instance == null) return false;
+        if (MasterManager.Instance.CharacterManager == null) return false;
+        BasePlayer Ctm_BP_Own = MasterManager.Instance.CharacterManager.OwnPlayer;
+        return (Ctm_BP_Own != null && Ctm_BP_Own.ID == I_Int_BP_OwnerID);
+    }
+    // Todo impacto: hace dano y reposiciona al jugador //
+    // El dano va por el Character Manager para que la vida baje igual en todos los clientes //
+    private void ApplyHit(BasePlayer Ctm_BP_Target)
+    {
+        if (Ctm_BP_Target == null) return;
+        if (Ctm_BP_Target.ID == I_Int_BP_OwnerID) return;
+        if (!IsOwnerLocal()) return;
+        Debug.Log("[Bullet] Impacto tipo " + I_Int_Type + " sobre " + Ctm_BP_Target.ID + " por " + I_Flt_Damage);
+        MasterManager.Instance.CharacterManager.DamageCharacter(Ctm_BP_Target.ID, I_Flt_Damage);
+    }
     private void OnDestroy()
     {
         // Special Behaviour //
@@ -150,9 +168,9 @@ public class Bullet : MonoBehaviourPunCallbacks
                 // Regular Rock Behaviour (Impacto directo) //
                 if (R_Ctm_BP_Target != null)
                 {
-                    R_Ctm_BP_Target.ExecuteDamage(I_Flt_Damage);
                     R_Ctm_BP_Target.HijackPush(this.transform.forward, 10f);
                 }
+                ApplyHit(R_Ctm_BP_Target);
                 break;
 
             case 1:
@@ -161,16 +179,18 @@ public class Bullet : MonoBehaviourPunCallbacks
                 {
                     R_Ctm_BP_Target.ExecuteFlip();
                 }
+                ApplyHit(R_Ctm_BP_Target);
                 break;
 
             case 2:
-                // Fan / Ventilador (Área / Ráfaga) //
+                // Fan / Ventilador (ï¿½rea / Rï¿½faga) //
                 Collider[] Col_A1_HitCollidersWind = Physics.OverlapSphere(this.transform.position, 5f, I_LyrM_DetectionLayers);
                 foreach (Collider Col_Hit in Col_A1_HitCollidersWind)
                 {
                     if (Col_Hit.TryGetComponent<BasePlayer>(out BasePlayer target))
                     {
                         target.HijackPush(this.transform.forward, 15f);
+                        ApplyHit(target);
                     }
                 }
                 break;
@@ -186,17 +206,18 @@ public class Bullet : MonoBehaviourPunCallbacks
                     }
                     Instantiate(_icePrefab, spawnPos, Quaternion.identity);
                 }
-                Destroy(this.gameObject);
+                ApplyHit(R_Ctm_BP_Target);
                 break;
 
             case 4:
-                // Slow Potion (Área) //
+                // Slow Potion (ï¿½rea) //
                 Collider[] Col_A1_HitColliders1 = Physics.OverlapSphere(this.transform.position, 4f, I_LyrM_DetectionLayers);
                 foreach (Collider Col_Hit in Col_A1_HitColliders1)
                 {
                     if (Col_Hit.TryGetComponent<BasePlayer>(out BasePlayer target))
                     {
                         target.UsePotion(4f, 0.4f);
+                        ApplyHit(target);
                     }
                 }
                 break;
@@ -205,9 +226,9 @@ public class Bullet : MonoBehaviourPunCallbacks
                 // Banana (Impacto directo) //
                 if (R_Ctm_BP_Target != null)
                 {
-                    R_Ctm_BP_Target.ExecuteDamage(I_Flt_Damage);
                     R_Ctm_BP_Target.ExecuteFalling();
                 }
+                ApplyHit(R_Ctm_BP_Target);
                 break;
 
             case 6:
@@ -216,10 +237,11 @@ public class Bullet : MonoBehaviourPunCallbacks
                 {
                     R_Ctm_BP_Target.UsePotion(4f, 1.8f);
                 }
+                ApplyHit(R_Ctm_BP_Target);
                 break;
 
             case 7:
-                // Bomb (Área) //
+                // Bomb (ï¿½rea) //
                 Collider[] Col_A1_HitColliders3 = Physics.OverlapSphere(this.transform.position, 6f, I_LyrM_DetectionLayers);
                 foreach (Collider Col_Hit in Col_A1_HitColliders3)
                 {
@@ -227,6 +249,7 @@ public class Bullet : MonoBehaviourPunCallbacks
                     {
                         target.HijackBomb(this.transform.position, 18f, 6f, 1.5f);
                         target.ExecuteFalling();
+                        ApplyHit(target);
                     }
                 }
                 break;

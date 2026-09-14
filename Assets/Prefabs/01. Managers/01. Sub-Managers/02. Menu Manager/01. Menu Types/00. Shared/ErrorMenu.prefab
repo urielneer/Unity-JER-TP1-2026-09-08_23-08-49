@@ -96,11 +96,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 292497468854235578, guid: 0a77cd32147fad94dafd7b3fa667a8fb, type: 3}
       propertyPath: m_text
-      value: ERROR!
+      value: Fin de ronda
       objectReference: {fileID: 0}
     - target: {fileID: 292497468854235578, guid: 0a77cd32147fad94dafd7b3fa667a8fb, type: 3}
       propertyPath: m_fontColor.a
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 292497468854235578, guid: 0a77cd32147fad94dafd7b3fa667a8fb, type: 3}
       propertyPath: m_fontColor.g
@@ -228,7 +228,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2380510514744660451, guid: 0a77cd32147fad94dafd7b3fa667a8fb, type: 3}
       propertyPath: _titleName
-      value: ERROR!
+      value: Fin de ronda
       objectReference: {fileID: 0}
     - target: {fileID: 2380510514744660451, guid: 0a77cd32147fad94dafd7b3fa667a8fb, type: 3}
       propertyPath: _buttonFont.g

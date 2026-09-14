@@ -114,9 +114,11 @@ public class MenuTypeWaitingRoom : BaseMenuType
             {
                 foreach (Player Plyr in PhotonNetwork.PlayerList)
                 {
-                    if (Plyr.NickName == Str_Name) 
+                    if (Plyr.NickName == Str_Name)
                     {
                         GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateVigilantNumber),RpcTarget.All, Plyr.ActorNumber);
+                        // Room Property - Fuente de verdad del rol (sobrevive cambio de escena y menus inactivos) //
+                            PhotonNetwork.CurrentRoom.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "VigilantActor", Plyr.ActorNumber } });
                     }
                 }
                 GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateListToEveryone),RpcTarget.All, new object[] { R_Str_A1_PlayerNames });
@@ -132,7 +134,7 @@ public class MenuTypeWaitingRoom : BaseMenuType
                             UpdateRoom();
                         // Force Update Other Client's Room Prefab //
                             GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateVigilantNumber),RpcTarget.All, Int_VigilantNumber);
-                            GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateListToEveryone),RpcTarget.All, new object[] { R_Str_A1_PlayerNames }); // ¿Por que object? PORQUE NO PARABA DE DAR FAIL Y ME VOLVIO LOCO!!!1! <3 //
+                            GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateListToEveryone),RpcTarget.All, new object[] { R_Str_A1_PlayerNames }); // ï¿½Por que object? PORQUE NO PARABA DE DAR FAIL Y ME VOLVIO LOCO!!!1! <3 //
                     }
                 }
                 [PunRPC]
@@ -144,7 +146,7 @@ public class MenuTypeWaitingRoom : BaseMenuType
                     // Force Update Other Client's Room Prefab //
                         GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateVigilantNumber),RpcTarget.All, Int_VigilantNumber);
                         GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateVigilantNumber),RpcTarget.All, Int_VigilantNumber);
-                        GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateListToEveryone),RpcTarget.All, new object[] { R_Str_A1_PlayerNames }); // ¿Por que object? PORQUE NO PARABA DE DAR FAIL Y ME VOLVIO LOCO!!!1! <3 //
+                        GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateListToEveryone),RpcTarget.All, new object[] { R_Str_A1_PlayerNames }); // ï¿½Por que object? PORQUE NO PARABA DE DAR FAIL Y ME VOLVIO LOCO!!!1! <3 //
                 }
                 [PunRPC]
                 private void RPC_ForceUpdateListToClients(string[] Str_A1_PlayerList)

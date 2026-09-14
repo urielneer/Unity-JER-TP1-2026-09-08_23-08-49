@@ -66,6 +66,8 @@ public class CharacterManager : BaseManager<CharacterManager>
                         break;
                         case 1: // Level //
 
+                            // Rol - Se resuelve desde la Room Property (el RPC del lobby puede no haber llegado) //
+                                ResolveClientTypeFromRoom();
                             // Variables //
                                 Vector3 Vec3_Pos = Vector3.zero;
                                 Quaternion Quat_Rot = Quaternion.identity;
@@ -130,6 +132,58 @@ public class CharacterManager : BaseManager<CharacterManager>
             {
                 IO_E_PT_ClientType = E_PT_New;
             }
+            private MenuTypeHUD GetHUD()
+            {
+                BaseMenuType Ctm_BMT_HUD = MasterManager.Instance.MenuManager.GetMenuReference("HUD");
+                if (Ctm_BMT_HUD == null) return null;
+                return Ctm_BMT_HUD.gameObject.GetComponent<MenuTypeHUD>();
+            }
+            private System.Collections.IEnumerator ShowRoleRoutine()
+            {
+                // Esperar a que el HUD este abierto - Arranca con el LoadingMenu adelante //
+                    float Flt_Timeout = 10f;
+                    MenuTypeHUD Ctm_MTH_HUD = GetHUD();
+                    while (Flt_Timeout > 0f && (Ctm_MTH_HUD == null || !Ctm_MTH_HUD.gameObject.activeInHierarchy))
+                    {
+                        Flt_Timeout -= Time.deltaTime;
+                        yield return null;
+                        Ctm_MTH_HUD = GetHUD();
+                    }
+                    if (Ctm_MTH_HUD == null) yield break;
+                // Mostrar //
+                    Ctm_MTH_HUD.ShowRole(IO_E_PT_ClientType);
+                    yield return new WaitForSeconds(2f);
+                    Ctm_MTH_HUD.ClearRole();
+            }
+            // Unica fuente de verdad sobre quien es el Vigilante //
+            public int GetVigilantActorNumber()
+            {
+                // Room Property - Elegido en el lobby //
+                    if (PhotonNetwork.CurrentRoom != null &&
+                        PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("VigilantActor", out object Obj_Actor))
+                    {
+                        int Int_Stored = (int) Obj_Actor;
+                        if (Int_Stored != -1) return Int_Stored;
+                    }
+                // Fallback - Si nunca se eligio, el Master es el Vigilante //
+                    return (PhotonNetwork.MasterClient != null) ? PhotonNetwork.MasterClient.ActorNumber : -1;
+            }
+            public void ResolveClientTypeFromRoom()
+            {
+                // Variables //
+                    int Int_VigilantActor = GetVigilantActorNumber();
+                // Asignar //
+                    IO_E_PT_ClientType = (PhotonNetwork.LocalPlayer.ActorNumber == Int_VigilantActor) ?
+                                            PlayerType.Vigilant :
+                                            PlayerType.Chaser;
+                    Debug.Log("[Character Manager] Rol asignado: " + IO_E_PT_ClientType + " (Actor " + PhotonNetwork.LocalPlayer.ActorNumber + ", Vigilante es Actor " + Int_VigilantActor + ")");
+                // Reset de partida - Esto corre en cada arranque de Level //
+                    R_Int_ChaserDeaths = 0;
+                    R_Bool_GameOver = false;
+                    O_Ctm_BP_A1_PlayerList = new BasePlayer[0];
+                // Avisar el rol en pantalla - El temporizado corre aca porque el HUD puede estar inactivo //
+                    StartCoroutine(ShowRoleRoutine());
+            }
             public Hashtable AddToPlayerList(BasePlayer Ctm_BP_Client)
             {
                 AddNewToArray(ref O_Ctm_BP_A1_PlayerList, Ctm_BP_Client);
@@ -164,10 +218,90 @@ public class CharacterManager : BaseManager<CharacterManager>
                     Hashtable Hsh_MapKeys = new Hashtable
                     {
                         { PlayerID_KEY, Int_ID },
-                    }; 
+                    };
                     KillCharacter(Hsh_MapKeys);
                 #endregion Synchronize
             }
+            // Reposiciona sin curar - Se usa cuando la bala pega pero el jugador sobrevive //
+            public void RepositionCharacter(int Int_ID)
+            {
+                #region    Synchronize
+                    Hashtable Hsh_MapKeys = new Hashtable
+                    {
+                        { PlayerID_KEY, Int_ID },
+                    };
+                    GetComponent<PhotonView>().RPC(nameof(RPC_AlertCharacterRepositionToClients), RpcTarget.All, Hsh_MapKeys);
+                #endregion Synchronize
+            }
+            // Todo el dano pasa por aca para que la vida sea igual en todos los clientes //
+            public void DamageCharacter(int Int_ID, float Flt_Damage)
+            {
+                GetComponent<PhotonView>().RPC(nameof(RPC_DamageCharacter), RpcTarget.All, Int_ID, Flt_Damage);
+            }
+            #region    Condiciones de Victoria
+                [Header(" Condiciones de Victoria")]
+                    [SerializeField] private int _killsToWin = 3;
+                private int R_Int_ChaserDeaths = 0;
+                private bool R_Bool_GameOver = false;
+                private void RegisterChaserDeath(int Int_ID)
+                {
+                    // Salir si ya termino - Cada rama avisa, si no la cuenta falla en silencio //
+                        if (R_Bool_GameOver)
+                        {
+                            Debug.LogWarning("[Character Manager] Muerte ignorada: la partida ya figura terminada (GameOver quedo en true)");
+                            return;
+                        }
+                    // Solo cuentan los Corredores //
+                        PhotonView PV_Dead = PhotonView.Find(Int_ID);
+                        if (PV_Dead == null)
+                        {
+                            Debug.LogWarning("[Character Manager] Muerte ignorada: no se encontro el PhotonView " + Int_ID);
+                            return;
+                        }
+                    // Quien cayo NO tiene que ser el Vigilante //
+                    // Se mira el dueño del PhotonView contra la Room Property, no el enum del BasePlayer: //
+                    // PlayerType.Vigilant es el indice 0, o sea el valor por defecto, asi que si el SetData //
+                    // todavia no llego a esta maquina cualquier Corredor figura como Vigilante y no se contaba //
+                        int Int_DeadActor = (PV_Dead.Owner != null) ? PV_Dead.Owner.ActorNumber : -1;
+                        if (Int_DeadActor == GetVigilantActorNumber())
+                        {
+                            Debug.Log("[Character Manager] Muerte ignorada: cayo el Vigilante (Actor " + Int_DeadActor + ")");
+                            return;
+                        }
+                    // Sumar muerte //
+                        R_Int_ChaserDeaths++;
+                        Debug.Log("[Character Manager] Corredor eliminado (" + R_Int_ChaserDeaths + "/" + _killsToWin + ")");
+                    // Gana el Vigilante //
+                        if (R_Int_ChaserDeaths >= _killsToWin)
+                            EndGame(true);
+                }
+                public void EndGame(bool Bool_VigilantWon)
+                {
+                    if (R_Bool_GameOver) return;
+                    GetComponent<PhotonView>().RPC(nameof(RPC_EndGame), RpcTarget.All, Bool_VigilantWon);
+                }
+                [SerializeField] private float _restartDelay = 5f;
+                [SerializeField] private float _cleanRestartPause = 1.5f;
+                private System.Collections.IEnumerator RestartRoundRoutine()
+                {
+                    yield return new WaitForSecondsRealtime(_restartDelay);
+                    // Sacar la pantalla de resultado en TODOS los clientes //
+                        GameResultScreen.Hide();
+                    // Salir si ya no estamos en la sala //
+                        if (!PhotonNetwork.InRoom)
+                        {
+                            Debug.LogWarning("[Character Manager] No se pudo reiniciar: ya no estamos en la sala");
+                            yield break;
+                        }
+                    // El Master maneja el cambio de escena, el resto lo sigue por AutomaticallySyncScene //
+                        if (!PhotonNetwork.IsMasterClient) yield break;
+                    // Reinicio limpio - Se pasa por el menu para que la ronda nueva arranque igual que la primera //
+                    // Recargar el nivel encima de si mismo dejaba la camara y los managers con datos de la ronda vieja //
+                    // El segundo paso lo maneja GameResultScreen desde el evento de carga de escena, //
+                    // porque esta corrutina muere apenas cambia la escena //
+                        GameResultScreen.RequestCleanRestart(_cleanRestartPause);
+                }
+            #endregion Condiciones de Victoria
         #endregion Custom Methods
         #region    PUN         
             #region    Hastable
@@ -279,15 +413,95 @@ public class CharacterManager : BaseManager<CharacterManager>
                             }
                         }
                         [PunRPC]
+                        private void RPC_DamageCharacter(int Int_ID, float Flt_Damage)
+                        {
+                            // Variables //
+                                PhotonView PV_Target = PhotonView.Find(Int_ID);
+                                if (PV_Target == null)
+                                {
+                                    Debug.LogWarning("[Character Manager] Dano perdido: no se encontro el PhotonView " + Int_ID);
+                                    return;
+                                }
+                                BasePlayer Ctm_BP_Target = PV_Target.GetComponent<BasePlayer>();
+                                if (Ctm_BP_Target == null) return;
+                            // Solo los Corredores reciben dano - Se mira el dueño, no el enum (default = Vigilant) //
+                                int Int_TargetActor = (PV_Target.Owner != null) ? PV_Target.Owner.ActorNumber : -1;
+                                if (Int_TargetActor == GetVigilantActorNumber())
+                                {
+                                    Debug.Log("[Character Manager] Dano ignorado: el objetivo es el Vigilante");
+                                    return;
+                                }
+                            // Aplicar en TODOS los clientes para que la vida quede igual en todos //
+                                bool Bool_Survived = Ctm_BP_Target.ExecuteDamage(Flt_Damage);
+                                Debug.Log("[Character Manager] Dano " + Flt_Damage + " a " + Int_ID + " -> vida " + Ctm_BP_Target.Health + (Bool_Survived ? " (sigue vivo)" : " (cae)"));
+                            // Solo el Master decide muerte o reposicion, asi no se duplica //
+                                if (!PhotonNetwork.IsMasterClient) return;
+                                if (Bool_Survived) RepositionCharacter(Int_ID);
+                                else               KillCharacter(Int_ID);
+                        }
+                        [PunRPC]
+                        private void RPC_AlertCharacterRepositionToClients(Hashtable Hsh_Input)
+                        {
+                            if (IsPlayerIDHashtable(Hsh_Input))
+                            {
+                                // Variables //
+                                    PhotonView PV_Target = PhotonView.Find((int)Hsh_Input[PlayerID_KEY]);
+                                    if (PV_Target == null) return;
+                                    BasePlayer Ctm_BP_Client = PV_Target.GetComponent<BasePlayer>();
+                                    if (Ctm_BP_Client == null) return;
+                                // Mover sin curar //
+                                    Ctm_BP_Client.ExecuteSpawn(false);
+                            }
+                        }
+                        [PunRPC]
                         private void RPC_AlertCharacterDeathToClients(Hashtable Hsh_Input)
                         {
                             if (IsPlayerIDHashtable(Hsh_Input))
                             {
                                 // Variables //
-                                    BasePlayer Ctm_BP_Client = (PhotonView.Find((int)Hsh_Input[PlayerID_KEY])).GetComponent<BasePlayer>();
+                                    PhotonView PV_Target = PhotonView.Find((int)Hsh_Input[PlayerID_KEY]);
+                                    if (PV_Target == null) return;
+                                    BasePlayer Ctm_BP_Client = PV_Target.GetComponent<BasePlayer>();
+                                    if (Ctm_BP_Client == null) return;
+                                // Ya estaba caido - No se cuenta de nuevo //
+                                    if (Ctm_BP_Client.IsDead)
+                                    {
+                                        Debug.Log("[Character Manager] Muerte repetida ignorada para " + Ctm_BP_Client.ID);
+                                        return;
+                                    }
                                 // Kill //
+                                    Debug.Log("[Character Manager] Cae el jugador " + Ctm_BP_Client.ID + " (" + Ctm_BP_Client.ClientType + ")");
                                     Ctm_BP_Client.ExecuteDeath();
+                                // Victoria - El Master lleva la cuenta de corredores caidos //
+                                    if (PhotonNetwork.IsMasterClient) RegisterChaserDeath((int)Hsh_Input[PlayerID_KEY]);
                             }
+                        }
+                        [PunRPC]
+                        private void RPC_EndGame(bool Bool_VigilantWon)
+                        {
+                            // Evitar doble disparo //
+                                if (R_Bool_GameOver) return;
+                                R_Bool_GameOver = true;
+                            // Gano este cliente ? //
+                                bool Bool_IAmVigilant = (IO_E_PT_ClientType == PlayerType.Vigilant);
+                                bool Bool_IWon = (Bool_IAmVigilant == Bool_VigilantWon);
+                            // Motivo - Cambia segun el rol de quien lee //
+                                string Str_Reason;
+                                if (Bool_VigilantWon)
+                                    Str_Reason = Bool_IAmVigilant ?
+                                                    "Eliminaste a los Corredores " + _killsToWin + " veces." :
+                                                    "El Vigilante eliminó a los Corredores " + _killsToWin + " veces.";
+                                else
+                                    Str_Reason = Bool_IAmVigilant ?
+                                                    "Un Corredor te alcanzó." :
+                                                    "Los Corredores alcanzaron al Vigilante.";
+                            // Cortar el juego //
+                                MasterManager.Instance.GameManager.GameEnd();
+                            // Pantalla propia - No usa el ErrorMenu, asi victoria y derrota se ven distintas //
+                                GameResultScreen.Show(Bool_IWon, Str_Reason, _restartDelay);
+                            Debug.Log("[Character Manager] Fin de partida. Gano " + (Bool_VigilantWon ? "el Vigilante" : "los Corredores") + ". Este cliente es " + IO_E_PT_ClientType + " -> " + (Bool_IWon ? "VICTORIA" : "DERROTA"));
+                            // Reinicio de ronda - No hace falta rehacer la sala //
+                                StartCoroutine(RestartRoundRoutine());
                         }
                         [PunRPC]
                         private void RPC_AlertCharacterRespawnToClients(Hashtable Hsh_Input)

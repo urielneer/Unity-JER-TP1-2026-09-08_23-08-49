@@ -16,6 +16,8 @@ public class MenuTypeHUD : BaseMenuType
             public MenuListContainerKillFeed KillFeed => IO_Ctm_MLCKF_KillFeed;
             [SerializeField] private BaseMenuLabel _itemLabel;
             private BaseMenuLabel IO_Ctm_BML_ItemLabel;
+            [SerializeField] private BaseMenuLabel _roleLabel;
+            private BaseMenuLabel IO_Ctm_BML_RoleLabel;
     #endregion Variables
     #region    Methods
         #region    Unity Methods
@@ -27,9 +29,28 @@ public class MenuTypeHUD : BaseMenuType
                     IO_Ctm_MCE_Chat = _chat;
                     IO_Ctm_MLCKF_KillFeed = _killFeed;
                     IO_Ctm_BML_ItemLabel = _itemLabel;
+                    IO_Ctm_BML_RoleLabel = _roleLabel;
+                    if (IO_Ctm_BML_RoleLabel != null) IO_Ctm_BML_RoleLabel.Overwrite("");
             }
         #endregion Unity Methods
         #region    Custom Methods
+            public void ShowRole(PlayerType E_PT_Type)
+            {
+                // El campo puede no estar asignado en el Inspector //
+                    if (IO_Ctm_BML_RoleLabel == null) IO_Ctm_BML_RoleLabel = _roleLabel;
+                    if (IO_Ctm_BML_RoleLabel == null)
+                    {
+                        Debug.LogError("[HUD] 'Role Label' sin asignar en el Inspector de MenuType_HUD");
+                        return;
+                    }
+                // Escribir - Sin corrutina, el HUD puede estar inactivo en este momento //
+                    IO_Ctm_BML_RoleLabel.Overwrite((E_PT_Type == PlayerType.Vigilant) ? "SOS EL VIGILANTE" : "SOS CORREDOR");
+                    Debug.Log("[HUD] Mostrando rol: " + E_PT_Type);
+            }
+            public void ClearRole()
+            {
+                if (IO_Ctm_BML_RoleLabel != null) IO_Ctm_BML_RoleLabel.Overwrite("");
+            }
             public void UpdateItemDisplay(int Int_ItemIndex)
             {
                 // Variables //
