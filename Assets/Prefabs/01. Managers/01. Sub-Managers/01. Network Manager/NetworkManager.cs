@@ -94,43 +94,14 @@ public class NetworkManager : BaseManager<NetworkManager>
                 {
                     // Variables //
                         MenuTypeWaitingRoom Ctm_MTWR_Reference = (MasterManager.Instance.MenuManager.GetMenuReference("WaitingRoom")).gameObject.GetComponent<MenuTypeWaitingRoom>();
-                    // Menu Manager Communication //
+                    // Menu Manager Communication // 
                         // Update Room //
                             Ctm_MTWR_Reference.SetUpRoom();
-                    // Si se fue el Vigilante, elegir otro y reiniciar //
-                        ReassignVigilantIfNeeded(PUNPl_OtherPlayer);
                     Debug.Log("[Network Manager] Status: 'Player Left Room'");
-                }
-                private void ReassignVigilantIfNeeded(Player PUNPl_Gone)
-                {
-                    // Solo el Master decide //
-                        if (!PhotonNetwork.IsMasterClient) return;
-                        if (PhotonNetwork.CurrentRoom == null) return;
-                    // Era el Vigilante el que se fue ? //
-                        if (!PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("VigilantActor", out object Obj_Actor)) return;
-                        if ((int) Obj_Actor != PUNPl_Gone.ActorNumber) return;
-                    // Elegir reemplazo //
-                        Player PUNPl_New = null;
-                        foreach (Player PUNPl_Candidate in PhotonNetwork.PlayerList)
-                        {
-                            if (PUNPl_Candidate.ActorNumber == PUNPl_Gone.ActorNumber) continue;
-                            PUNPl_New = PUNPl_Candidate;
-                            break;
-                        }
-                        if (PUNPl_New == null) return;
-                    // Publicar nuevo Vigilante //
-                        PhotonNetwork.CurrentRoom.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "VigilantActor", PUNPl_New.ActorNumber } });
-                        Debug.Log("[Network Manager] Vigilante se fue. Nuevo Vigilante: Actor " + PUNPl_New.ActorNumber + ". Reiniciando partida.");
-                    // Reiniciar la ronda para todos //
-                        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex == 1)
-                            PhotonNetwork.LoadLevel(1);
                 }
                 public override void OnLeftRoom() // CURRENT PLAYER LEAVES THE ROOM //
                 {
                     Debug.Log("[Network Manager] Status: 'Left Room'");
-                    // Volver al menu principal //
-                        MasterManager.Instance.GameManager.ShowCursor();
-                        ReturnToTitle();
                 }
             #endregion Waiting Room
             #region    Error Room
@@ -160,25 +131,9 @@ public class NetworkManager : BaseManager<NetworkManager>
             }
             public void LeaveGame()
             {
+                // Game Manager Communication // 
+                    GetComponent<PhotonView>().RPC(nameof(RPC_EndGameForAll),RpcTarget.All, "");
                 Debug.Log("[Network Manager] Status: 'Leaving Game'");
-                // Devolver el control del mouse antes de volver al menu //
-                    MasterManager.Instance.GameManager.ShowCursor();
-                    MasterManager.Instance.InputManager.DisableInputPlayerActions();
-                // Limpiar HUD / Scoreboard / lista de la sala - Tiene que ser ANTES de salir, usa un RPC //
-                    if (PhotonNetwork.InRoom) MasterManager.Instance.GameManager.LeftRoom();
-                // Salir - El regreso al menu lo hace OnLeftRoom() //
-                    if (PhotonNetwork.InRoom) PhotonNetwork.LeaveRoom();
-                    else                      ReturnToTitle();
-            }
-            private void ReturnToTitle()
-            {
-                // Sacar la pantalla de resultado si quedo abierta //
-                    GameResultScreen.Hide();
-                // Volver a la escena de menu //
-                    if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex != 0)
-                        UnityEngine.SceneManagement.SceneManager.LoadScene(0);
-                // Menu Manager Communication //
-                    MasterManager.Instance.MenuManager.OpenMenu("TitleMenu");
             }
             public void JoinRoom(RoomInfo PUNRI_Input)
             {

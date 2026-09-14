@@ -45,10 +45,32 @@ public class SightSensor : MonoBehaviour
     #region    Custom Methods
         public bool IsEnemyVisible(Transform Tfm_Target)
         {
-            // Sin objetivo //
-                if (Tfm_Target == null) return false;
-            // Se chequea al objetivo, no a los demas //
-                return CanPercieveTarget(Tfm_Target);
+            // Variables //
+                Collider[] Col_A1_HitBuffer = new Collider[10];
+                Vector3 Vec3_Origin = transform.position;    
+                int Int_Count  = Physics.OverlapSphereNonAlloc(
+                                                                Vec3_Origin,
+                                                                I_Flt_ViewDistance,
+                                                                Col_A1_HitBuffer,
+                                                                I_LM_TargetLayer
+                                                            );
+            // Collisions //
+                foreach (Collider Col_Hit in Col_A1_HitBuffer)
+                {
+                    // Ignore Own Collision //
+                        if (Col_Hit == this.gameObject.GetComponent<MeshCollider>()) continue;
+                    // Ignore null //
+                        if (Col_Hit == null) continue;
+                    // Is Target ? //
+                        if (Col_Hit.transform == Tfm_Target) continue;
+                    // Verify Hit //
+                        if ( CanPercieveTarget(Col_Hit.transform) )
+                        { 
+                            return true;
+                        }
+                }
+            // return //
+                return false;
         }
         public Transform[] FindVisibleEnemy()
         {

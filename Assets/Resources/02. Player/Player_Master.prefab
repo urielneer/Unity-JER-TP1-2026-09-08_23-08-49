@@ -320,7 +320,7 @@ MonoBehaviour:
   _maxDistances: {x: 21, y: 7}
   _collisionLayers:
     serializedVersion: 2
-    m_Bits: 768
+    m_Bits: 512
   _cameraAnchor: {fileID: 5131294668187058300}
   _cameraPosition: {x: 0, y: 0, z: 0.85}
   _cameraRotation: {x: -2.8, y: 180, z: 0}

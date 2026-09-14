@@ -29,10 +29,6 @@ public class MapManager : BaseManager<MapManager>
             private string[] I_Str_A1_PickupResourcePaths;
             [SerializeField] private float _pickupSpawnInterval = 15f;
             private float I_Flt_PickupSpawnInterval;
-            [SerializeField] private int _maxActivePickups = 12;
-            private int I_Int_MaxActivePickups;
-            private Pickupable[] R_Ctm_Pkp_A1_Pool = new Pickupable[0];
-            private Coroutine R_Crtn_PickupSpawner;
     #endregion Tiles
     #region    Map
     [SerializeField] private int _mapLengthX;
@@ -58,9 +54,6 @@ public class MapManager : BaseManager<MapManager>
             TaskCompletionSource<bool> R_Bool_AllPlayersFinished; 
             TaskCompletionSource<bool> R_Bool_MasterStartupCompleted;
             int R_Int_PlayersRemaining;
-            // Si el RPC llega antes de que se cree el TaskCompletionSource, se recuerda aca //
-            bool R_Bool_MapDataArrived = false;
-            bool R_Bool_MasterDoneArrived = false;
         #region    Async Wait Variables
     #endregion Variables
     #region    Methods
@@ -76,7 +69,6 @@ public class MapManager : BaseManager<MapManager>
                     I_Ctm_FPW_A1_WallTiles = _wallTiles;
                     I_Str_A1_PickupResourcePaths = _pickupResourcePaths;
                     I_Flt_PickupSpawnInterval = _pickupSpawnInterval;
-                    I_Int_MaxActivePickups = _maxActivePickups;
                     SetBounds(_mapLengthX, _mapLengthY);
             }
         #endregion Unity Methods
@@ -93,26 +85,11 @@ public class MapManager : BaseManager<MapManager>
                                 MasterManager.Instance.MenuManager.OpenMenu("LoadingMenu");
                         break;
                         case 1: // Level //
-                            // Reset de ronda - El Map Manager es DontDestroyOnLoad, estos datos sobreviven al LoadLevel //
-                                // Si no se limpian, en la 2da ronda los avisos viejos dan por cargado un mapa que todavia no existe //
-                                    R_Bool_MapDataArrived = false;
-                                    R_Bool_MasterDoneArrived = false;
-                                // El pool apunta a Pickupables de la ronda anterior, ya destruidos //
-                                    R_Ctm_Pkp_A1_Pool = new Pickupable[0];
-                                // Cortar el spawner de la ronda anterior, si no se acumula uno por ronda //
-                                    if (R_Crtn_PickupSpawner != null)
-                                    {
-                                        StopCoroutine(R_Crtn_PickupSpawner);
-                                        R_Crtn_PickupSpawner = null;
-                                    }
                             // Async Variables //
                                 R_Bool_StartupCompleted = new TaskCompletionSource<bool>();
-                                R_Bool_AllPlayersFinished = new TaskCompletionSource<bool>();
+                                R_Bool_AllPlayersFinished = new TaskCompletionSource<bool>(); 
                                 R_Bool_MasterStartupCompleted = new TaskCompletionSource<bool>();
                                 R_Int_PlayersRemaining = PhotonNetwork.CurrentRoom.PlayerCount;
-                            // Si los avisos llegaron antes de crear los Task, se resuelven ahora //
-                                if (R_Bool_MapDataArrived)   R_Bool_StartupCompleted.TrySetResult(true);
-                                if (R_Bool_MasterDoneArrived) R_Bool_MasterStartupCompleted.TrySetResult(true);
                             // Menu Manager Communication - Change to Loading //
                                 MasterManager.Instance.MenuManager.OpenMenu("LoadingMenu");
                             // Set Bounds //
@@ -128,7 +105,7 @@ public class MapManager : BaseManager<MapManager>
                                         // MapManager - Generate Map Data //
                                             GenerateMap();
                                     // Pickups - Start Periodic Spawn //
-                                    R_Crtn_PickupSpawner = StartCoroutine(SpawnPickupsPeriodically());
+                                    StartCoroutine(SpawnPickupsPeriodically());
                                     // MenuManager - Switch Screen //
                                     MasterManager.Instance.MenuManager.OpenMenu("HUD"); 
                                         // Async Await - Wait For "All Loads" //
@@ -344,20 +321,8 @@ public class MapManager : BaseManager<MapManager>
                 public void LoadMap()
                 {
                     #region    Spawn Map
-                        // Si algun tile todavia no llego, se saltea en vez de cortar el LoadMap a la mitad //
-                        // Cortarlo dejaba el flag sin setear y el cliente se quedaba cargando para siempre //
-                        int Int_Missing = 0;
                         foreach (int Int_ID in R_Int_A1_WallIDs)
-                        {
-                            PhotonView PV_Tile = PhotonView.Find(Int_ID);
-                            if (PV_Tile == null) { Int_Missing++; continue; }
-                            FloorTile_W Ctm_FTW_Tile = PV_Tile.GetComponent<FloorTile_W>();
-                            if (Ctm_FTW_Tile == null || Ctm_FTW_Tile.SpawnPoint == null) { Int_Missing++; continue; }
-                            AddNewToArray(ref O_GObj_A1_SpawnPoint, Ctm_FTW_Tile.SpawnPoint);
-                        }
-                        if (Int_Missing > 0)
-                            Debug.LogWarning("[Map Manager] " + Int_Missing + " tiles todavia no llegaron al cargar el mapa");
-                        R_Bool_MapDataArrived = true;
+                            AddNewToArray(ref O_GObj_A1_SpawnPoint, (PhotonView.Find(Int_ID)).GetComponent<FloorTile_W>().SpawnPoint);
                         R_Bool_StartupCompleted?.TrySetResult(true);
                     #endregion Spawn Map
                 }
@@ -366,13 +331,10 @@ public class MapManager : BaseManager<MapManager>
                     R_Int_PlayersRemaining--;
                     if (R_Int_PlayersRemaining == 0) { R_Bool_AllPlayersFinished?.TrySetResult(true); }
                 }
-                public void MatserStartUpCompleted()
-                {
-                    R_Bool_MasterDoneArrived = true;
-                    R_Bool_MasterStartupCompleted?.TrySetResult(true);
-                }
+                public void MatserStartUpCompleted() { R_Bool_MasterStartupCompleted?.TrySetResult(true); }
     #endregion Regular Methods
     #endregion Custom Methods
+<<<<<<< HEAD
         #region    Coroutines Methods
             private System.Collections.IEnumerator SpawnPickupsPeriodically()
             {
@@ -418,6 +380,33 @@ public class MapManager : BaseManager<MapManager>
             #region    Hastable
                 // Map //
                     public void ApplyMapManagerProperties(Hashtable Hsh_Input)
+=======
+    #region    Coroutines Methods
+    private System.Collections.IEnumerator SpawnPickupsPeriodically()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(I_Flt_PickupSpawnInterval);
+            // Guard //
+            if (I_Str_A1_PickupResourcePaths == null || I_Str_A1_PickupResourcePaths.Length == 0) continue;
+            // Spawn - Fixed Range Along The Corridor //
+            string Str_PickupPath = I_Str_A1_PickupResourcePaths[Random.Range(0, I_Str_A1_PickupResourcePaths.Length)];
+            // Mismo sistema de coordenadas que GenerateMap: crece de (0,0,0) hacia +X y -Z //
+            float Flt_MaxX = (I_Int_MapLengthX - 1) * I_Int_TileRadius * 2f;
+            float Flt_MinZ = -(I_Int_MapLengthY - 1) * I_Int_TileRadius * 2f;
+            Vector3 Vec3_PickupPos = new Vector3(Random.Range(0f, Flt_MaxX), 0.5f, Random.Range(Flt_MinZ, 0f));
+            Debug.Log("[Pickup Spawn] MapLengthX=" + I_Int_MapLengthX + " MapLengthY=" + I_Int_MapLengthY + " TileRadius=" + I_Int_TileRadius + "  RangoX=[0," + Flt_MaxX + "] RangoZ=[" + Flt_MinZ + ",0] Pos=" + Vec3_PickupPos);
+            GameObject GObj_Pickup = PhotonNetwork.Instantiate(Str_PickupPath, Vec3_PickupPos, Quaternion.identity);
+            if (GObj_Pickup == null) continue;
+            GObj_Pickup.transform.SetParent(I_Trfm_MapContainer);
+        }
+    }
+    #endregion Coroutines Methods
+    #region    PUN         
+    #region    Hastable
+    // Map //
+    public void ApplyMapManagerProperties(Hashtable Hsh_Input)
+>>>>>>> parent of 3024a06 (recemos)
                     {
                         I_Int_TileRadius =          (int) Hsh_Input[MapTileRadius_KEY];
                         R_Int_A2_MapData = new int[I_Int_MapLengthX, I_Int_MapLengthY];

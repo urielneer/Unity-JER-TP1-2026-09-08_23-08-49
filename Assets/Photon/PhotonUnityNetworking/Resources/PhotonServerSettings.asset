@@ -62,11 +62,6 @@ MonoBehaviour:
   - RPC_CharacterMaterial
   - RPC_ForceUpdateListToEveryone
   - RPC_ForceUpdateVigilantNumber
-  - RPC_EndGame
-  - RPC_PoolDespawn
-  - RPC_PoolSpawn
-  - RPC_AlertCharacterRepositionToClients
-  - RPC_DamageCharacter
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0
