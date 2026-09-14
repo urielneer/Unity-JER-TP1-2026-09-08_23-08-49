@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &3274436062896509929
+--- !u!1 &349767599130037152
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,48 +8,48 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2095781619921522799}
-  - component: {fileID: 2481555738640907767}
-  - component: {fileID: 6094153968082488875}
-  - component: {fileID: 4235975877490646647}
-  - component: {fileID: 1151785857852036544}
+  - component: {fileID: 2520857698598217355}
+  - component: {fileID: 6212140793192312590}
+  - component: {fileID: 2730070372960139139}
+  - component: {fileID: 5908163397092450016}
+  - component: {fileID: 3653211804121046653}
   m_Layer: 0
-  m_Name: Bullet
+  m_Name: IceField
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2095781619921522799
+--- !u!4 &2520857698598217355
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3274436062896509929}
+  m_GameObject: {fileID: 349767599130037152}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.5, y: 0, z: -6.5}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 23.132933, y: 0.0000010213275, z: -18.409962}
+  m_LocalScale: {x: 5, y: 1, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &2481555738640907767
+--- !u!33 &6212140793192312590
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3274436062896509929}
-  m_Mesh: {fileID: -1550514412580984892, guid: b28096d59d7f33e4b9e7818df8cdd842, type: 3}
---- !u!23 &6094153968082488875
+  m_GameObject: {fileID: 349767599130037152}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &2730070372960139139
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3274436062896509929}
+  m_GameObject: {fileID: 349767599130037152}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -68,7 +68,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b2fe96734f90a924494f3a5144b81a06, type: 2}
+  - {fileID: 2100000, guid: e033bbcfefb40c542a9b32493fe0e626, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -92,51 +92,39 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &4235975877490646647
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3274436062896509929}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 1
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -1550514412580984892, guid: b28096d59d7f33e4b9e7818df8cdd842, type: 3}
---- !u!114 &1151785857852036544
+--- !u!114 &5908163397092450016
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3274436062896509929}
+  m_GameObject: {fileID: 349767599130037152}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d855ad4ac6104274b8e3133eb48a254e, type: 3}
+  m_Script: {fileID: 11500000, guid: eb9364ef758444548b78c5dbaf262611, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Bullet
-  _lifetime: 10
-  _detectionLayers:
+  m_EditorClassIdentifier: Assembly-CSharp::IceField
+  _icePhysicMaterial: {fileID: 13400000, guid: 3cc21a315282b4648b08dbb0c71473cc, type: 2}
+  _fieldDuration: 6
+--- !u!64 &3653211804121046653
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349767599130037152}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 448
-  _materials:
-  - {fileID: 2100000, guid: b2fe96734f90a924494f3a5144b81a06, type: 2}
-  - {fileID: 2100000, guid: 989a709f7412b864dbcbc5e283e14198, type: 2}
-  - {fileID: 2100000, guid: 8ba8aaaf6482dd041b021f69506ca2e2, type: 2}
-  - {fileID: 2100000, guid: e033bbcfefb40c542a9b32493fe0e626, type: 2}
-  - {fileID: 2100000, guid: 6e88ea49c916da642a1ef269e0dfadb8, type: 2}
-  - {fileID: 2100000, guid: f6e0ce240309f1a45958b5acad3d5fe5, type: 2}
-  - {fileID: 2100000, guid: 2fff0ea4b0547a741a6ad8a75ecfa42e, type: 2}
-  - {fileID: 2100000, guid: 23a2f7b889847da48b6ee05920673f2e, type: 2}
-  _icePrefab: {fileID: 349767599130037152, guid: c1e9ce6189a595a4da10a57e0a924d05, type: 3}
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}

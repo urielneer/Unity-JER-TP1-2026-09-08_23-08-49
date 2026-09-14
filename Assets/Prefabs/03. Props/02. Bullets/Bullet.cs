@@ -23,10 +23,12 @@ public class Bullet : MonoBehaviourPunCallbacks
             LayerMask I_LyrM_DetectionLayers;
             [SerializeField] Material[] _materials;
             private Material[] I_Mat_A1_Materials;
+
+    [SerializeField] private GameObject _icePrefab;
     #endregion Variables
     #region    Methods
-        #region    Unity Methods
-            public void Awake()
+    #region    Unity Methods
+    public void Awake()
             {
                 I_Mat_A1_Materials = _materials;
                 I_Flt_Lifetime = _lifetime;
@@ -87,15 +89,26 @@ public class Bullet : MonoBehaviourPunCallbacks
                                 Destroy(this.gameObject);
                             }
                         }
-                    // Is Wall or Obstacle? //
-                        else 
-                        if ( (5 < Col_Hit.gameObject.layer) && (Col_Hit.gameObject.layer < 8) )
-                        { 
+                        // Is Wall or Obstacle? //
+                        else if ((5 < Col_Hit.gameObject.layer) && (Col_Hit.gameObject.layer < 8))
+                        {
+                            // Si es Hielo (Tipo 3), spawnea el piso antes de borrarse //
+                            if (I_Int_Type == 3)
+                            {
+                                GameObject icePrefab = Resources.Load<GameObject>("03. Obstacles/IceField");
+                                if (icePrefab != null)
+                                {
+                                    Vector3 spawnPos = new Vector3(transform.position.x, 0.05f, transform.position.z);
+                                    Instantiate(icePrefab, spawnPos, Quaternion.identity);
+                                    Debug.Log("[Hielo Spawneado con éxito en: " + spawnPos + "]");
+                                }
+                            }
+
                             R_Ctm_BP_Target = null;
                             Destroy(this.gameObject);
                         }
-                    
-                }
+
+    }
             #endregion Damage
             #region    Movement
                 public void ExecuteMovement(float Flt_FixedDT)
@@ -139,79 +152,101 @@ public class Bullet : MonoBehaviourPunCallbacks
                     // Move //
                         transform.Translate(R_Vec3_Speed * Flt_FixedDT, Space.World);
                 }
-            #endregion Movement
-        #endregion Custom Methods
+    #endregion Movement
+    #endregion Custom Methods
     #endregion Methods
 
     #region    External Classe Methods
-        private void OnDestroy()
+    private void OnDestroy()
+    {
+        // Special Behaviour //
+        switch (I_Int_Type)
         {
-            // Exit ? //
-                if (R_Ctm_BP_Target == null) return;
-            //  Special Behaviour //
-                switch (I_Int_Type)
+            case 0:
+                // Regular Rock Behaviour (Impacto directo) //
+                if (R_Ctm_BP_Target != null)
                 {
-                    case 0:
-                        // Regular Rock Behaviour //
-                            R_Ctm_BP_Target.ExecuteDamage(I_Flt_Damage);
-                            R_Ctm_BP_Target.HijackPush(this.transform.forward, 10f);
-                    break;
-                    case 1:
-                        // Flip //
-                            R_Ctm_BP_Target.ExecuteFlip();
-                    break;
-                    case 2:
-                        // Fan //
-                            ///////// Send this transform.position for a spawn point
-                    break;
-                    case 3:
-                        // Freeze /
-                            ///////// PHYSICAL MATERIAL 
-                    break;
-                    case 4:
-                        // Slow Potion //
-                            float Flt_PotionRadius1 = 0;
-                            Collider[] Col_A1_HitColliders1 = Physics.OverlapSphere(
-                                                                                    this.transform.position,
-                                                                                    Flt_PotionRadius1
-                                                                                  );
-                            foreach (Collider Col_Hit in Col_A1_HitColliders1 )
-                            {
-                                R_Ctm_BP_Target.UsePotion(0f,0f);
-                            }
-                    break;
-                    case 5:
-                        // Banana //
-                            R_Ctm_BP_Target.ExecuteDamage(I_Flt_Damage);
-                            R_Ctm_BP_Target.ExecuteFalling();
-                    break;
-                    case 6:
-                        // Fast Potion //
-                            float Flt_PotionRadius2 = 0;
-                            Collider[] Col_A1_HitColliders2 = Physics.OverlapSphere(
-                                                                                    this.transform.position,
-                                                                                    Flt_PotionRadius2
-                                                                                  );
-                            foreach (Collider Col_Hit in Col_A1_HitColliders2 )
-                            {
-                                R_Ctm_BP_Target.UsePotion(0f,0f);
-                            }
-                    break;
-                    case 7:
-                        // Bomb //
-                            float Flt_Force = 0;
-                            float Flt_ExplosionRadius3 = 0;
-                            float Flt_UpwardsModifier = 0;
-                            Collider[] Col_A1_HitColliders3 = Physics.OverlapSphere(
-                                                                                    this.transform.position,
-                                                                                    Flt_ExplosionRadius3
-                                                                                  );
-                            foreach (Collider Col_Hit in Col_A1_HitColliders3 )
-                            {
-                                Col_Hit.GetComponent<BasePlayer>().HijackBomb(this.transform.position, Flt_Force, Flt_ExplosionRadius3, Flt_UpwardsModifier);
-                            }
-                    break;
+                    R_Ctm_BP_Target.ExecuteDamage(I_Flt_Damage);
+                    R_Ctm_BP_Target.HijackPush(this.transform.forward, 10f);
                 }
+                break;
+
+            case 1:
+                // Flip (Impacto directo) //
+                if (R_Ctm_BP_Target != null)
+                {
+                    R_Ctm_BP_Target.ExecuteFlip();
+                }
+                break;
+
+            case 2:
+                // Fan / Ventilador (Área / Ráfaga) //
+                Collider[] Col_A1_HitCollidersWind = Physics.OverlapSphere(this.transform.position, 5f, I_LyrM_DetectionLayers);
+                foreach (Collider Col_Hit in Col_A1_HitCollidersWind)
+                {
+                    if (Col_Hit.TryGetComponent<BasePlayer>(out BasePlayer target))
+                    {
+                        target.HijackPush(this.transform.forward, 15f);
+                    }
+                }
+                break;
+
+            case 3:
+                // Freeze / Campo Helado //
+                if (_icePrefab != null)
+                {
+                    Vector3 spawnPos = transform.position;
+                    if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 20f))
+                    {
+                        spawnPos = hit.point + Vector3.up * 0.05f;
+                    }
+                    Instantiate(_icePrefab, spawnPos, Quaternion.identity);
+                }
+                Destroy(this.gameObject);
+                break;
+
+            case 4:
+                // Slow Potion (Área) //
+                Collider[] Col_A1_HitColliders1 = Physics.OverlapSphere(this.transform.position, 4f, I_LyrM_DetectionLayers);
+                foreach (Collider Col_Hit in Col_A1_HitColliders1)
+                {
+                    if (Col_Hit.TryGetComponent<BasePlayer>(out BasePlayer target))
+                    {
+                        target.UsePotion(4f, 0.4f);
+                    }
+                }
+                break;
+
+            case 5:
+                // Banana (Impacto directo) //
+                if (R_Ctm_BP_Target != null)
+                {
+                    R_Ctm_BP_Target.ExecuteDamage(I_Flt_Damage);
+                    R_Ctm_BP_Target.ExecuteFalling();
+                }
+                break;
+
+            case 6:
+                // Fast Potion (Consumo directo) //
+                if (R_Ctm_BP_Target != null)
+                {
+                    R_Ctm_BP_Target.UsePotion(4f, 1.8f);
+                }
+                break;
+
+            case 7:
+                // Bomb (Área) //
+                Collider[] Col_A1_HitColliders3 = Physics.OverlapSphere(this.transform.position, 6f, I_LyrM_DetectionLayers);
+                foreach (Collider Col_Hit in Col_A1_HitColliders3)
+                {
+                    if (Col_Hit.TryGetComponent<BasePlayer>(out BasePlayer target))
+                    {
+                        target.HijackBomb(this.transform.position, 18f, 6f, 1.5f);
+                        target.ExecuteFalling();
+                    }
+                }
+                break;
         }
+    }
     #endregion External Classe Methods
 }

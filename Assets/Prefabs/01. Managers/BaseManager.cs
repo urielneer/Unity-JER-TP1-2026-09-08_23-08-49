@@ -19,8 +19,11 @@ public class BaseManager<GenericManager> : MonoBehaviourPunCallbacks where Gener
                     if (_instance == null)
                     {
                         _instance = this as GenericManager;
-                        
-                        DontDestroyOnLoad(gameObject);
+
+                        if (transform.parent == null)
+                        {
+                            DontDestroyOnLoad(gameObject);
+                        }
                     }
                 // Is there an instance of this singleton present? //
                     else if (_instance != this) 

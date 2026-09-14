@@ -452,17 +452,27 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                 private void ExecuteMovement(float Flt_FixedDT)
                 {
                     // Variables //
-                        Vector3 Vec3_Displacement = Vector3.zero;
+                    Vector3 Vec3_Displacement = Vector3.zero;
                     // Set Displacement //
-                        Vec3_Displacement += XAxisMovement(Flt_FixedDT);
-                        Vec3_Displacement += YAxisMovement(Flt_FixedDT);
-                    // Apply Movement //
-                        if (Vec3_Displacement.sqrMagnitude > 0f)
-                        {
-                            GetComponent<Rigidbody>().MovePosition(GetComponent<Rigidbody>().position + Vec3_Displacement);
-                        }
+                    Vec3_Displacement += XAxisMovement(Flt_FixedDT);
+                    Vec3_Displacement += YAxisMovement(Flt_FixedDT);
+
+                    // Chequeo de Fricción //
+                    Collider selfCol = GetComponent<Collider>();
+                    bool isSliding = selfCol != null && selfCol.material != null && selfCol.material.dynamicFriction < 0.1f;
+
+                    if (isSliding)
+                    {
+                        // En hielo usa fuerzas: el PhysicMaterial se encarga de hacerlo patinar
+                        GetComponent<Rigidbody>().AddForce(Vec3_Displacement / Flt_FixedDT, ForceMode.Acceleration);
+                    }
+                    // Apply Movement Regular //
+                    else if (Vec3_Displacement.sqrMagnitude > 0f)
+                    {
+                        GetComponent<Rigidbody>().MovePosition(GetComponent<Rigidbody>().position + Vec3_Displacement);
+                    }
                 }
-                private Vector3 XAxisMovement(float Flt_FixedDT)
+    private Vector3 XAxisMovement(float Flt_FixedDT)
                 {
                     // Variables //
                         Vector3 Vec3_Displacement = Vector3.zero;
@@ -635,22 +645,36 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                     
                     /* "(Multiplier - 1) is used because the RigidBody's gravity is counted already and has a value of "1" */
                 }
-            #endregion Jump
-            #region    Combat
-                #region    Shoot
-                    private void ExecuteStraightShot(int Int_Index) // Ahora es la tecnica default // // Ahora es el item o habilidad //
+    #endregion Jump
+    #region    Combat
+    #region    Shoot
+                private void ExecuteStraightShot(int Int_Index) // Ahora es la tecnica default // // Ahora es el item o habilidad //
+                {
+                  
+                    R_Bool_CanShoot = false;
+                    MasterManager.Instance.BulletManager.SynchronizeBullet(this, this.transform.forward, Int_Index);
+                    float Flt_Cooldown = 0.5f;
+                    if (MasterManager.Instance != null && MasterManager.Instance.CharacterManager != null)
                     {
-                        R_Bool_CanShoot = false;
-                        MasterManager.Instance.BulletManager.SynchronizeBullet(this, this.transform.forward, Int_Index);
+                        Flt_Cooldown = Mathf.Max(0.2f, MasterManager.Instance.CharacterManager.ShootCooldown);
                     }
-/* ! */             private void ExecuteCurvedShot()  
+                    // Reenable Cooldown //
+                    StartCoroutine(ReenableShootingDelay(Flt_Cooldown));
+                }
+                private void ExecuteCurvedShot()
+                {
+                    R_Bool_CanShoot = false;
+                    MasterManager.Instance.BulletManager.SynchronizeBullet(this, this.transform.forward);
+                    float Flt_Cooldown = 0.5f;
+                    if (MasterManager.Instance != null && MasterManager.Instance.CharacterManager != null)
                     {
-                        R_Bool_CanShoot = false;
-                        MasterManager.Instance.BulletManager.SynchronizeBullet(this, this.transform.forward);
+                        Flt_Cooldown = Mathf.Max(0.2f, MasterManager.Instance.CharacterManager.ShootCooldown);
                     }
-                #endregion Shoot
-                #region    Spawn
-                    public void ExecuteSpawn()
+                    StartCoroutine(ReenableShootingDelay(Flt_Cooldown));
+                }
+    #endregion Shoot
+    #region    Spawn
+    public void ExecuteSpawn()
                     {      
                         // Variables //
                             R_Bool_CanShoot = true;
@@ -800,9 +824,8 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                             }
                             else
                             {
-                                ExecuteStraightShot(0);
+                                ExecuteStraightShot(3);
                             }
-                            StartCoroutine(ReenableShootingDelay(MasterManager.Instance.CharacterManager.ShootCooldown));
                     }
                     public void OnStartedCurvedShooting() 
                     {
@@ -1175,7 +1198,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                         // Exit ? //
                             if (R_Flt_SpeedModifier != 1) return;
                         // Proceed //
-                            SpeedPotions(Flt_DelaySeconds, Flt_Speed);
+                            StartCoroutine(SpeedPotions(Flt_DelaySeconds, Flt_Speed));
                     }
 /* ! */             public void UseBanana()
                     {
