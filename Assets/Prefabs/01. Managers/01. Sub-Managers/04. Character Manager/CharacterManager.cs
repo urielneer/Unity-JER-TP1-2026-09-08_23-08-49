@@ -66,7 +66,6 @@ public class CharacterManager : BaseManager<CharacterManager>
                         break;
                         case 1: // Level //
 
-    /* ! */             IO_E_PT_ClientType = PlayerType.Chaser;
                             // Variables //
                                 Vector3 Vec3_Pos = Vector3.zero;
                                 Quaternion Quat_Rot = Quaternion.identity;
@@ -127,6 +126,10 @@ public class CharacterManager : BaseManager<CharacterManager>
             }
         #endregion Override Methods
         #region    Custom Methods
+            public void Changetype(PlayerType E_PT_New)
+            {
+                IO_E_PT_ClientType = E_PT_New;
+            }
             public Hashtable AddToPlayerList(BasePlayer Ctm_BP_Client)
             {
                 AddNewToArray(ref O_Ctm_BP_A1_PlayerList, Ctm_BP_Client);

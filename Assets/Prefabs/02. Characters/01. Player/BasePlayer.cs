@@ -329,6 +329,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                     // Material //
                         I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[Int_Input];
                 }
+                bool Bool_FirstSetData = false;
                 public void SetData(string Str_Input, int Int_Input, float Flt_Input, PlayerType E_PT_ClientType)
                 {
                     // Variables //
@@ -341,14 +342,16 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                         {
                                 R_Bool_IsRotationLocked = true;
                                 R_Flt_MaxDistance = I_Vec2_MaxDistances.x;
-                            // Rotation lock //
-                                ReenableRotation();
                         }
                         else
                         {
                                 R_Bool_IsRotationLocked = false;
                                 R_Flt_MaxDistance = I_Vec2_MaxDistances.y;
                         }
+                    // Rotation lock //
+                        if (R_E_PT_ClientType == PlayerType.Vigilant && Bool_FirstSetData)
+                            StartCoroutine(ReenableRotation());
+                        Bool_FirstSetData = true;
                 }
                 public void UpdateIsMoving()
                 {
@@ -725,6 +728,9 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                             SetVisibility(true);
                             PhotonNetwork.SendAllOutgoingCommands();
                             MasterManager.Instance.CharacterManager.ChangePlayerMaterial(null, (R_E_PT_ClientType == PlayerType.Chaser) ? 1 : 0);
+                        // Rotation lock //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant)
+                                StartCoroutine(ReenableRotation());
                     }
                     private void ExecuteReSpawnDelay()
                     {
@@ -801,7 +807,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                         // Stop If Fallen //
                             if (O_Bool_IsFallen) return;   
                         // Stop If RotationLocked //
-                            if (R_Bool_IsRotationLocked) return;      
+                            if (R_Bool_IsRotationLocked) return; 
                         // Proceed //
                             R_Bool_IsRotating = true;
                             R_Int_CurrentInputRotationX = (Vec2_Input.x < 0)?
@@ -966,12 +972,12 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
             private System.Collections.IEnumerator ReenableRotation()
             {
                 R_Bool_IsRotationLocked = true;
-
+                
                 yield return new WaitForSeconds(5f);
 
                 R_Bool_IsRotationLocked = false;
-
-                ReenableRelock();
+        
+                StartCoroutine(ReenableRelock());
             }
             private System.Collections.IEnumerator ReenableRelock()
             {
@@ -981,8 +987,15 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                 yield return new WaitForSeconds(10f);
 
                 R_Bool_IsRotationLocked = true;
+
+                R_Int_CurrentInputMovementX = 0; 
+                R_Int_CurrentInputMovementY = 0; 
+                R_Int_CurrentInputRotationX = 0;
+                R_Int_CurrentInputRotationY = 0;
+
                 MasterManager.Instance.CharacterManager.SpawnCharacter(IO_Int_ID);
-                ReenableRotation();
+        
+                StartCoroutine(ReenableRotation());
             } 
             private System.Collections.IEnumerator ResetFlipping(float Flt_DelaySeconds)
             {
@@ -1101,6 +1114,8 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                             if (R_E_PT_ClientType != PlayerType.Vigilant) return;
                         // Proceed //
                             Debug.Log("Tagged: Game Over");
+                            // Game Manager Communication // 
+                                MasterManager.Instance.GameManager.GameEnd();
                     }
                 #endregion Damage Type
                 #region    Hijack Type

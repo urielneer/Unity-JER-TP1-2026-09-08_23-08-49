@@ -77,8 +77,6 @@ public class MapManager : BaseManager<MapManager>
                         case 0:
                             // Menu Manager Communication - Change to Loading //
                                 MasterManager.Instance.MenuManager.OpenMenu("LoadingMenu");
-                            // Game Manager Communication // 
-                                MasterManager.Instance.GameManager.GameEnd();
                         break;
                         case 1: // Level //
                             // Async Variables //
@@ -88,8 +86,6 @@ public class MapManager : BaseManager<MapManager>
                                 R_Int_PlayersRemaining = PhotonNetwork.CurrentRoom.PlayerCount;
                             // Menu Manager Communication - Change to Loading //
                                 MasterManager.Instance.MenuManager.OpenMenu("LoadingMenu");
-                            // Game Manager Communication // 
-                                MasterManager.Instance.GameManager.GameStart();
                             // Set Bounds //
                                 SetBounds(_mapLengthX, _mapLengthY);
                             // MapManager - Search Container //
@@ -140,8 +136,9 @@ public class MapManager : BaseManager<MapManager>
             #region    Regular Methods
                 public void SetBounds(int Int_X, int Int_Y)
                 {
-                    _mapLengthX = Int_X;
-                    _mapLengthY = Int_Y;
+                    //_mapLengthX = Int_X;
+                    _mapLengthX = 4;
+                    _mapLengthY = ( Int_Y < 4 ) ? 4: Int_Y;
                     I_Int_MapLengthX = _mapLengthX;
                     I_Int_MapLengthY = _mapLengthY;
                     R_Int_A2_MapData = new int[I_Int_MapLengthX, I_Int_MapLengthY];

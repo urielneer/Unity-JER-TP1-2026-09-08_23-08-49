@@ -107,16 +107,18 @@ public class MasterManager : BaseManager<MasterManager>
                     base.OnStartUp();
                 // Start Up Sub-Managers //
                     // Start //
-                        if (I_Ctm_IMgr_InputManager   != null) I_Ctm_IMgr_InputManager.OnStartUp();   // 1) Set Key Actions //
-                        if (I_Ctm_MnMgr_MenuManager   != null) I_Ctm_MnMgr_MenuManager.OnStartUp();   // 2) Set Menu Up //
-                        if (I_Ctm_NMgr_NetworkManager != null) I_Ctm_NMgr_NetworkManager.OnStartUp(); // 3) Set Nework status On (If It's Off) //
-                        if (I_Ctm_MpMgr_MapManager    != null) I_Ctm_MpMgr_MapManager.OnStartUp();    // 4) Create/Load Map //
+                        if (I_Ctm_IMgr_InputManager   != null) I_Ctm_IMgr_InputManager.OnStartUp();   // Set Key Actions //
+                        if (I_Ctm_MnMgr_MenuManager   != null) I_Ctm_MnMgr_MenuManager.OnStartUp();   // Set Menu Up //
+                        if (I_Ctm_NMgr_NetworkManager != null) I_Ctm_NMgr_NetworkManager.OnStartUp(); // Set Nework status On (If It's Off) //
+                        if (I_Ctm_MpMgr_MapManager    != null) I_Ctm_MpMgr_MapManager.OnStartUp();    // Create/Load Map //
                     // Await - Resume Startup //
                          R_Bool_StartupCompleted = await R_Bool_StartupAwait.Task;
                     // Resume //
-                        if (I_Ctm_GMgr_GameManager    != null) I_Ctm_GMgr_GameManager.OnStartUp();    // 5) Assign Spawnpoints //
-                        if (I_Ctm_CMgr_CharManager    != null) I_Ctm_CMgr_CharManager.OnStartUp();    // 6) Spawn Players //
-                        if (I_Ctm_BMgr_BulletManager  != null) I_Ctm_BMgr_BulletManager.OnStartUp();  // 7) Setup Bullet Manager //
+                        if (I_Ctm_GMgr_GameManager    != null) I_Ctm_GMgr_GameManager.OnStartUp();    // Assign Spawnpoints //
+                        if (I_Ctm_CMgr_CharManager    != null) I_Ctm_CMgr_CharManager.OnStartUp();    // Spawn Players //
+                        // Game Manager Communication // 
+                            MasterManager.Instance.GameManager.GameStart();
+                        if (I_Ctm_BMgr_BulletManager  != null) I_Ctm_BMgr_BulletManager.OnStartUp();  // Setup Bullet Manager //
                 // Flag //
                     R_Bool_StartupCompleted = true;
             }

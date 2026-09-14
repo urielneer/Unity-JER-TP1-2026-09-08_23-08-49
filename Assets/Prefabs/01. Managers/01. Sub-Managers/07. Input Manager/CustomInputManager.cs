@@ -136,7 +136,7 @@ public class CustomInputManager : BaseManager<CharacterManager>
                             // Is In Proper Scene? //
                                 if (SceneManager.GetActiveScene().buildIndex != 1) return;
                             // Action //
-                               MasterManager.Instance.CharacterManager.OwnPlayer.OnStartedRotating(IACbC_Context.ReadValue<Vector2>());
+                                MasterManager.Instance.CharacterManager.OwnPlayer.OnStartedRotating(IACbC_Context.ReadValue<Vector2>());
                         } 
                         public void OnJumpKeyPressed(InputAction.CallbackContext IACbC_Context)
                         {
