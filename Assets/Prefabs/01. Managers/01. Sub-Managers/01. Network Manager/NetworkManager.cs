@@ -41,6 +41,8 @@ public class NetworkManager : BaseManager<NetworkManager>
                         MasterManager.Instance.MenuManager.OpenMenu("LoadingMenu");
                         PhotonNetwork.OfflineMode = false;
                         PhotonNetwork.ConnectUsingSettings();
+                        PhotonNetwork.SendRate = 30;
+                        PhotonNetwork.SerializationRate = 30;
                         PhotonNetwork.NetworkingClient.LoadBalancingPeer.DisconnectTimeout = 2000;
                         O_Bool_IsStatusOn = true;
                         Debug.Log("[Network Manager] Status: 'On'");

@@ -19,7 +19,7 @@ MonoBehaviour:
     AppIdVoice: 
     AppVersion: 
     UseNameServer: 1
-    FixedRegion: sa
+    FixedRegion: 
     Server: 
     Port: 0
     ProxyServer: 
@@ -58,6 +58,10 @@ MonoBehaviour:
   - RPC_AlertCharacterRespawnToClients
   - RPC_MasterWaitCompleted
   - RPC_ReduceClientLoadCounter
+  - RPC_SpawnCharacter
+  - RPC_CharacterMaterial
+  - RPC_ForceUpdateListToEveryone
+  - RPC_ForceUpdateVigilantNumber
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0

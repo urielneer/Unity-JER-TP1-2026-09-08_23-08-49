@@ -25,10 +25,6 @@ public class MapManager : BaseManager<MapManager>
             private FloorTile_R[] I_Ctm_FPR_A1_RockTiles;
             [SerializeField] private FloorTile_W[] _wallTiles;
             private FloorTile_W[] I_Ctm_FPW_A1_WallTiles;
-            [SerializeField] private string[] _pickupResourcePaths;
-            private string[] I_Str_A1_PickupResourcePaths;
-            [SerializeField] private float _pickupSpawnInterval = 15f;
-            private float I_Flt_PickupSpawnInterval;
         #endregion Tiles
         #region    Map
             [SerializeField] private int _mapLengthX;
@@ -67,8 +63,6 @@ public class MapManager : BaseManager<MapManager>
                     I_Int_TileRadius = _tileRadius;
                     I_Ctm_FPR_A1_RockTiles = _rockTiles;
                     I_Ctm_FPW_A1_WallTiles = _wallTiles;
-                    I_Str_A1_PickupResourcePaths = _pickupResourcePaths;
-                    I_Flt_PickupSpawnInterval = _pickupSpawnInterval;
                     SetBounds(_mapLengthX, _mapLengthY);
             }
         #endregion Unity Methods
@@ -83,8 +77,6 @@ public class MapManager : BaseManager<MapManager>
                         case 0:
                             // Menu Manager Communication - Change to Loading //
                                 MasterManager.Instance.MenuManager.OpenMenu("LoadingMenu");
-                            // Game Manager Communication // 
-                                MasterManager.Instance.GameManager.GameEnd();
                         break;
                         case 1: // Level //
                             // Async Variables //
@@ -94,8 +86,6 @@ public class MapManager : BaseManager<MapManager>
                                 R_Int_PlayersRemaining = PhotonNetwork.CurrentRoom.PlayerCount;
                             // Menu Manager Communication - Change to Loading //
                                 MasterManager.Instance.MenuManager.OpenMenu("LoadingMenu");
-                            // Game Manager Communication // 
-                                MasterManager.Instance.GameManager.GameStart();
                             // Set Bounds //
                                 SetBounds(_mapLengthX, _mapLengthY);
                             // MapManager - Search Container //
@@ -108,15 +98,13 @@ public class MapManager : BaseManager<MapManager>
                                             ReduceCountdown();
                                         // MapManager - Generate Map Data //
                                             GenerateMap();
-                                        // Pickups - Start Periodic Spawn //
-                                            StartCoroutine(SpawnPickupsPeriodically());
                                         // MenuManager - Switch Screen //
                                             MasterManager.Instance.MenuManager.OpenMenu("HUD"); 
                                         // Async Await - Wait For "All Loads" //
                                             // Wait //
                                                 bool Bool_Success = await R_Bool_AllPlayersFinished.Task;
                                             // Inform Completion //
-                                                I_Trfm_MapContainer.GetComponent<MapContainer>().MasterWaitCompleted();
+                                                MasterWaitCompleted();
                                         // Proceed //
                                                 MasterManager.Instance.StartUpProceed();
 
@@ -129,12 +117,12 @@ public class MapManager : BaseManager<MapManager>
                                             // Wait //
                                                 bool Bool_Success1 = await R_Bool_StartupCompleted.Task;
                                             // Inform Completion //
-                                                I_Trfm_MapContainer.GetComponent<MapContainer>().ReduceClientLoadCounter();
-                                        // Async Await - Wait For "Load" //
+                                                ReduceClientLoadCounter();
+                                        // Async Await - Wait For Master //
                                             // Wait //
                                                 bool Bool_Success2 = await R_Bool_MasterStartupCompleted.Task;
                                             // Inform Completion //
-                                                I_Trfm_MapContainer.GetComponent<MapContainer>().ReduceClientLoadCounter();
+                                                // ReduceClientLoadCounter();
                                         // Proceed //
                                                 MasterManager.Instance.StartUpProceed();
 
@@ -148,8 +136,9 @@ public class MapManager : BaseManager<MapManager>
             #region    Regular Methods
                 public void SetBounds(int Int_X, int Int_Y)
                 {
-                    _mapLengthX = Int_X;
-                    _mapLengthY = Int_Y;
+                    //_mapLengthX = Int_X;
+                    _mapLengthX = 4;
+                    _mapLengthY = ( Int_Y < 4 ) ? 4: Int_Y;
                     I_Int_MapLengthX = _mapLengthX;
                     I_Int_MapLengthY = _mapLengthY;
                     R_Int_A2_MapData = new int[I_Int_MapLengthX, I_Int_MapLengthY];
@@ -318,7 +307,7 @@ public class MapManager : BaseManager<MapManager>
                             { MapData_KEY      , Int_A1_TempMapData   },
                             { MapWallIDs_KEY   , R_Int_A1_WallIDs     },
                         }; 
-                        I_Trfm_MapContainer.GetComponent<MapContainer>().UpdateAllMapManagers(Hsh_MapKeys);
+                        UpdateAllMapManagers(Hsh_MapKeys);
                     #endregion Synchronize
                 }
                 public void LoadMap()
@@ -337,39 +326,88 @@ public class MapManager : BaseManager<MapManager>
                 public void MatserStartUpCompleted() { R_Bool_MasterStartupCompleted?.TrySetResult(true); }
             #endregion Regular Methods
         #endregion Custom Methods
-        #region    Coroutines Methods
-            private System.Collections.IEnumerator SpawnPickupsPeriodically()
-            {
-                while (true)
-                {
-                    yield return new WaitForSeconds(I_Flt_PickupSpawnInterval);
-                    // Guard //
-                        if (I_Str_A1_PickupResourcePaths == null || I_Str_A1_PickupResourcePaths.Length == 0) continue;
-                    // Spawn - Fixed Range Along The Corridor //
-                        string Str_PickupPath = I_Str_A1_PickupResourcePaths[Random.Range(0, I_Str_A1_PickupResourcePaths.Length)];
-                        // Mismo sistema de coordenadas que GenerateMap: crece de (0,0,0) hacia +X y -Z //
-                            float Flt_MaxX = (I_Int_MapLengthX - 1) * I_Int_TileRadius * 2f;
-                            float Flt_MinZ = -(I_Int_MapLengthY - 1) * I_Int_TileRadius * 2f;
-                        Vector3 Vec3_PickupPos = new Vector3(Random.Range(0f, Flt_MaxX), 0.5f, Random.Range(Flt_MinZ, 0f));
-                        Debug.Log("[Pickup Spawn] MapLengthX=" + I_Int_MapLengthX + " MapLengthY=" + I_Int_MapLengthY + " TileRadius=" + I_Int_TileRadius + " → RangoX=[0," + Flt_MaxX + "] RangoZ=[" + Flt_MinZ + ",0] Pos=" + Vec3_PickupPos);
-                        GameObject GObj_Pickup = PhotonNetwork.Instantiate(Str_PickupPath, Vec3_PickupPos, Quaternion.identity);
-                        if (GObj_Pickup == null) continue;
-                        GObj_Pickup.transform.SetParent(I_Trfm_MapContainer);
-                }
-            }
-        #endregion Coroutines Methods
-        #region    PUN     
+        #region    PUN         
             #region    Hastable
-                public void ApplyMapManagerProperties(Hashtable Hsh_Input)
-                {
-                    I_Int_TileRadius =          (int) Hsh_Input[MapTileRadius_KEY];
-                    R_Int_A2_MapData = new int[I_Int_MapLengthX, I_Int_MapLengthY];
-                    SetBounds((int)Hsh_Input[MapAxisX_KEY], (int)Hsh_Input[MapAxisY_KEY]);
-                    UnFlatten1DArray((int[]) Hsh_Input[MapData_KEY], I_Int_MapLengthX, I_Int_MapLengthY, out int[,] Int_A2_TempMapData);
-                    R_Int_A2_MapData = Int_A2_TempMapData;
-                    R_Int_A1_WallIDs  = (int[])Hsh_Input[MapWallIDs_KEY];
-                }
-            #endregion Hastable
+                // Map //
+                    public void ApplyMapManagerProperties(Hashtable Hsh_Input)
+                    {
+                        I_Int_TileRadius =          (int) Hsh_Input[MapTileRadius_KEY];
+                        R_Int_A2_MapData = new int[I_Int_MapLengthX, I_Int_MapLengthY];
+                        SetBounds((int)Hsh_Input[MapAxisX_KEY], (int)Hsh_Input[MapAxisY_KEY]);
+                        UnFlatten1DArray((int[]) Hsh_Input[MapData_KEY], I_Int_MapLengthX, I_Int_MapLengthY, out int[,] Int_A2_TempMapData);
+                        R_Int_A2_MapData = Int_A2_TempMapData;
+                        R_Int_A1_WallIDs  = (int[])Hsh_Input[MapWallIDs_KEY];
+                    }
+                    public void ReduceClientLoadCounter()
+                    {
+                        GetComponent<PhotonView>().RPC(nameof(RPC_ReduceClientLoadCounter), RpcTarget.MasterClient); 
+                    }
+                    public void MasterWaitCompleted()
+                    {
+                        GetComponent<PhotonView>().RPC(nameof(RPC_MasterWaitCompleted), RpcTarget.All); 
+                    }
+                    public void UpdateAllMapManagers(Hashtable Hsh_MapKeys)
+                    {
+                        GetComponent<PhotonView>().RPC(nameof(RPC_ForceMapUpdateToClients), RpcTarget.All, Hsh_MapKeys); 
+                    }
+                    private bool AreMapManagerHashtables(Hashtable Hsh_Input)
+                    {
+                        if (
+                            Hsh_Input.ContainsKey(MapTileRadius_KEY) &&
+                            Hsh_Input.ContainsKey(MapAxisX_KEY)      &&
+                            Hsh_Input.ContainsKey(MapAxisY_KEY)      &&
+                            Hsh_Input.ContainsKey(MapData_KEY)       &&
+                            Hsh_Input.ContainsKey(MapWallIDs_KEY)
+                           )
+                        { 
+                            return true; 
+                        }
+                        else
+                        { 
+                            UnityEngine.Debug.LogError("\"MapContiner.cs\"'s \"AreMapManagerHashtables()\" returned FALSE, review Hastables");
+                            return false; 
+                        }
+                    }
+            #endregion Hastable  
+            #region    RPC
+                #region    Hashtables
+                    // Map //
+                        [PunRPC]
+                        private void RPC_ForceMapUpdateToClients(Hashtable Hsh_Properties)
+                        {
+                            if (!PhotonNetwork.IsMasterClient)
+                            {
+                                if (AreMapManagerHashtables(Hsh_Properties))
+                                {
+                                    // Import new properties //
+                                        MasterManager.Instance.MapManager.ApplyMapManagerProperties(Hsh_Properties);                           
+                                    // Load Map //
+                                        MasterManager.Instance.MapManager.LoadMap();
+                                    // MenuManager - Switch Screen //
+                                        MasterManager.Instance.MenuManager.OpenMenu("HUD"); 
+                                }
+                            }
+                        }
+                #endregion Hashtables 
+                #region    Await
+                        [PunRPC]
+                        private void RPC_ReduceClientLoadCounter()
+                        {
+                            if (PhotonNetwork.IsMasterClient)
+                            {
+                                    MasterManager.Instance.MapManager.ReduceCountdown();     
+                            }
+                        }
+                        [PunRPC]
+                        private void RPC_MasterWaitCompleted()
+                        {
+                            if (!PhotonNetwork.IsMasterClient)
+                            {
+                                    MasterManager.Instance.MapManager.MatserStartUpCompleted();     
+                            }
+                        }
+                #endregion Await 
+            #endregion RPC
         #endregion PUN
     #endregion Methods
 }

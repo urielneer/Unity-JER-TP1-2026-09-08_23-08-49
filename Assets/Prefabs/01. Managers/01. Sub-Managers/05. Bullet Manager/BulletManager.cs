@@ -87,13 +87,14 @@ public class BulletManager : BaseManager<BulletManager>
             }
         #endregion Override Methods
         #region    Custom Methods
-            public void SpawnBullet(string Str_OwnerNickname, int Int_ID, Vector3 Vec3_Pos, Quaternion Quat_Rot, Vector3 Vec3_Dir, int Int_Type)
+            public void SpawnBullet(string Str_OwnerNickname, int Int_ID, Vector3 Vec3_Pos, Quaternion Quat_Rot, Vector3 Vec3_Dir, int Int_Type, float Flt_SpeedMult)
             {
+        Debug.Log(" "+Str_OwnerNickname+") ID: "+Int_ID+" Dir: "+Vec3_Dir+" Speed: "+I_Flt_Speed+" Damage "+I_Flt_Damage+" Type: "+Int_Type);
                 #region    Spawn
                     // Spawn Bullet //
                         Bullet Ctm_Bllt_Own = (Instantiate(I_Ctm_Bllt_Prefab, Vec3_Pos, Quat_Rot)).GetComponent<Bullet>();
                     // Setup Bullets Dir & Speed //
-                        Ctm_Bllt_Own.SetData(Str_OwnerNickname, Int_ID, Vec3_Dir, I_Flt_Speed, I_Flt_Damage, Int_Type);
+                        Ctm_Bllt_Own.SetData(Str_OwnerNickname, Int_ID, Vec3_Dir, I_Flt_Speed * Flt_SpeedMult, I_Flt_Damage, Int_Type);
                     // Start Up // 
                         Ctm_Bllt_Own.OnStartUp();
                     // MapManager - Container //
@@ -116,8 +117,60 @@ public class BulletManager : BaseManager<BulletManager>
                         { BulletDir_KEY       , Vec3_Dir                   },
                         { BulletType_KEY      , Int_Index                   },
                     }; 
-                    I_Trfm_MapContainer.GetComponent<MapContainer>().UpdateAllBulletManagers(Hsh_MapKeys);
+                    UpdateAllBulletManagers(Hsh_MapKeys);
+                    PhotonNetwork.SendAllOutgoingCommands();
             }
         #endregion Custom Methods
+        #region    PUN         
+            #region    Hastable
+                // Bullet //
+                    public void UpdateAllBulletManagers(Hashtable Hsh_Input)
+                    {
+                        GetComponent<PhotonView>().RPC(nameof(RPC_ForceBulletUpdateToClients), RpcTarget.All, Hsh_Input); 
+                    }
+                    private bool AreBulletDataHashtables(Hashtable Hsh_Input)
+                    {
+                        if ( 
+                            Hsh_Input.ContainsKey(BulletOwnerID_KEY)   &&
+                            Hsh_Input.ContainsKey(BulletOwnerName_KEY) &&
+                            Hsh_Input.ContainsKey(BulletPos_KEY)       &&
+                            Hsh_Input.ContainsKey(BulletQuat_KEY)      &&
+                            Hsh_Input.ContainsKey(BulletDir_KEY)       &&
+                            Hsh_Input.ContainsKey(BulletType_KEY)       
+                           )
+                        { 
+                            return true; 
+                        }
+                        else
+                        { 
+                            UnityEngine.Debug.LogError("\"MapContiner.cs\"'s \"AreBulletDataHashtables()\" returned FALSE, review Hastables");
+                            return false; 
+                        }
+                    }
+            #endregion Hastable  
+            #region    RPC
+                #region    Hashtables
+                    // Bullet //
+                        [PunRPC]
+                        private void RPC_ForceBulletUpdateToClients(Hashtable Hsh_Input)
+                        {
+                            if (AreBulletDataHashtables(Hsh_Input))
+                            {                                
+                                float Flt_Multiplier = (PhotonNetwork.IsMasterClient) ? 1 : 10;
+                                // Force Spawn //
+                                    MasterManager.Instance.BulletManager.SpawnBullet(
+                                                                                     (string)Hsh_Input[BulletOwnerName_KEY], 
+                                                                                     (int)Hsh_Input[BulletOwnerID_KEY],
+                                                                                     (Vector3)Hsh_Input[BulletPos_KEY], 
+                                                                                     (Quaternion)Hsh_Input[BulletQuat_KEY], 
+                                                                                     (Vector3)Hsh_Input[BulletDir_KEY],
+                                                                                     (int)Hsh_Input[BulletType_KEY],
+                                                                                     Flt_Multiplier
+                                                                                    );
+                            }
+                        }
+                #endregion Hashtables 
+            #endregion RPC
+        #endregion PUN
     #endregion Methods
 }

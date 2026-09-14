@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using static CustomExtension.ArrayExtensions;
 
-public class BasePlayer : MonoBehaviourPunCallbacks
+public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
 {
     #region    Variables
         #region    Player Data
@@ -27,6 +27,9 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                 [SerializeField] SightSensor _prefabSightSensor;
                 SightSensor I_Ctm_SS_PrefabSightSensor;
                 SightSensor R_Ctm_SS_SightSensor = null;
+                [SerializeField] FogWar _prefabFogWar;
+                FogWar I_Ctm_FW_PrefabFogWar;
+                FogWar R_Ctm_FW_FogWar = null;
             [Space(10)]
             [Header(" Mouse Settings")]
                 [SerializeField] Mouse _prefabMouse;
@@ -191,12 +194,32 @@ public class BasePlayer : MonoBehaviourPunCallbacks
     #endregion Variables
     #region    Methods
         #region    Unity Methods
+            void IPunObservable.OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+            {
+                if (stream.IsWriting) 
+                {
+                        stream.SendNext(IO_Str_OwnerNickname);
+                        stream.SendNext(IO_Int_ID);
+                        stream.SendNext(IO_Flt_Health);
+                        stream.SendNext(R_E_PT_ClientType);
+                        stream.SendNext(O_Bool_IsMoving);
+                }
+                else
+                {
+                    IO_Str_OwnerNickname = (string) stream.ReceiveNext();
+                    IO_Int_ID = (int) stream.ReceiveNext();
+                    IO_Flt_Health = (float) stream.ReceiveNext();
+                    R_E_PT_ClientType = (PlayerType) stream.ReceiveNext();
+                    O_Bool_IsMoving = (bool) stream.ReceiveNext();
+                }
+            }
             public void Awake()
             {
                 // Inventory //
                     I_LyrM_CollisionLayers = _collisionLayers;
                 // Sight Sensor //
                     I_Ctm_SS_PrefabSightSensor = _prefabSightSensor;
+                    I_Ctm_FW_PrefabFogWar = _prefabFogWar;
                 // Mouse //
                     I_Ctm_Mse_PrefabMouse = _prefabMouse;
                     I_Flt_MouseSpeed = _mouseSpeed;
@@ -255,7 +278,11 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                     R_Ctm_SS_SightSensor = null;
                     R_Ctm_Mse_Mouse = null;
 
+
                     SetVisibility(true);
+                // Fix the funny Kinematic Telepoprt Glitch //
+                    if (!photonView.IsMine)
+                        this.gameObject.GetComponent<Rigidbody>().isKinematic = true;
             }
         #endregion Unity Methods
         #region    Override Methods
@@ -270,8 +297,6 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                 // Reposition transform //
                     Cam_Main.transform.localPosition = I_Vec3_CamPos;
                     Cam_Main.transform.localEulerAngles = I_Vec3_CamRot;
-                // Spawn //
-                    ExecuteSpawn();
             }
             public virtual void OnUpdate(float Flt_FixedDT)
             {
@@ -296,6 +321,15 @@ public class BasePlayer : MonoBehaviourPunCallbacks
         #endregion Override Methods
         #region    Custom Methods
             #region    Player Data
+                public void SetMaterial(int Int_Input = -1)
+                {
+                    // Error //
+                        if (Int_Input == -1)
+                            Int_Input = (R_E_PT_ClientType == PlayerType.Chaser) ? 1 : 0;
+                    // Material //
+                        I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[Int_Input];
+                }
+                bool Bool_FirstSetData = false;
                 public void SetData(string Str_Input, int Int_Input, float Flt_Input, PlayerType E_PT_ClientType)
                 {
                     // Variables //
@@ -303,25 +337,21 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                         IO_Int_ID = Int_Input;
                         IO_Flt_Health = Flt_Input;
                         R_E_PT_ClientType = E_PT_ClientType;
-
-    /* ! */             R_E_PT_ClientType = PlayerType.Chaser;
                     // Type Differences //
-                        if (R_E_PT_ClientType == PlayerType.Vigilant)
+                        if (E_PT_ClientType == PlayerType.Vigilant)
                         {
                                 R_Bool_IsRotationLocked = true;
-                            
                                 R_Flt_MaxDistance = I_Vec2_MaxDistances.x;
-                            // Rotation lock //
-                                ReenableRotation();
                         }
                         else
                         {
                                 R_Bool_IsRotationLocked = false;
-                                RemoveSpecificFromArray(ref I_GObj_A1_BodyParts, this.transform.Find("FogWar").gameObject);
-                                Destroy(this.transform.Find("FogWar").gameObject);
-
                                 R_Flt_MaxDistance = I_Vec2_MaxDistances.y;
                         }
+                    // Rotation lock //
+                        if (R_E_PT_ClientType == PlayerType.Vigilant && Bool_FirstSetData)
+                            StartCoroutine(ReenableRotation());
+                        Bool_FirstSetData = true;
                 }
                 public void UpdateIsMoving()
                 {
@@ -681,33 +711,50 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                             R_Bool_IsDead = false;
                             O_Bool_IsFlipped = false;
                             O_Bool_IsFallen = false;
+                            IO_Flt_Health = MasterManager.Instance.CharacterManager.MaxHealth;
                         // Spawn Other Prefabs //
-                            // Sight //
-                                if (R_Ctm_SS_SightSensor == null)
-                                {
-                                    if (R_E_PT_ClientType == PlayerType.Vigilant)
+                            if (photonView.IsMine)
+                            {
+                                // Sight //
+                                    if (R_Ctm_SS_SightSensor == null)
                                     {
-                                        R_Ctm_SS_SightSensor = Instantiate(I_Ctm_SS_PrefabSightSensor, Vector3.zero, Quaternion.identity);
-                                        R_Ctm_SS_SightSensor.transform.SetParent(this.CameraAnchor.gameObject.transform, false);
-                                        R_Ctm_SS_SightSensor.transform.localPosition = new Vector3(0f, -2f, 0f);
-                                        R_Ctm_SS_SightSensor.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+                                        if (R_E_PT_ClientType == PlayerType.Vigilant)
+                                        {
+                                            R_Ctm_SS_SightSensor = Instantiate(I_Ctm_SS_PrefabSightSensor, Vector3.zero, Quaternion.identity);
+                                            R_Ctm_SS_SightSensor.transform.SetParent(this.CameraAnchor.gameObject.transform, false);
+                                            R_Ctm_SS_SightSensor.transform.localPosition = new Vector3(0f, -2f, 0f);
+                                            R_Ctm_SS_SightSensor.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+                                        }
                                     }
-                                }
-                            // Mouse //
-                                if (R_Ctm_Mse_Mouse == null)
-                                {
-                                    R_Ctm_Mse_Mouse = Instantiate(I_Ctm_Mse_PrefabMouse, Vector3.zero, Quaternion.identity);
-                                    R_Ctm_Mse_Mouse.transform.localPosition = new Vector3(0f, 0f, 5f);
-                                    R_Ctm_Mse_Mouse.transform.SetParent(this.transform);
-                                }
+                                // Mouse //
+                                    if (R_Ctm_Mse_Mouse == null)
+                                    {
+                                        R_Ctm_Mse_Mouse = Instantiate(I_Ctm_Mse_PrefabMouse, Vector3.zero, Quaternion.identity);
+                                        R_Ctm_Mse_Mouse.transform.localPosition = new Vector3(0f, 0f, 5f);
+                                        R_Ctm_Mse_Mouse.transform.SetParent(this.transform);
+                                    }
+                                // Fog //
+                                    if (R_Ctm_FW_FogWar == null)
+                                    {
+                                        if (R_E_PT_ClientType == PlayerType.Vigilant)
+                                        {
+                                            R_Ctm_FW_FogWar = Instantiate(I_Ctm_FW_PrefabFogWar, Vector3.zero, Quaternion.identity);
+                                            R_Ctm_FW_FogWar.transform.localPosition = new Vector3(0f, 0f, 0f);
+                                            R_Ctm_FW_FogWar.transform.SetParent(this.transform);
+                                        }
+                                    }
+                            }
                         // Position //
                             int Int_RandIndex = UnityEngine.Random.Range(0, MasterManager.Instance.MapManager.SpawnPoints.Length);
                             this.transform.position = MasterManager.Instance.MapManager.SpawnPoints[Int_RandIndex].gameObject.transform.position;
                             this.transform.rotation = MasterManager.Instance.MapManager.SpawnPoints[Int_RandIndex].gameObject.transform.rotation;
-                        // Material //
-                            I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[(R_E_PT_ClientType == PlayerType.Chaser) ? 1 : 0];
                         // Visibility //
                             SetVisibility(true);
+                            PhotonNetwork.SendAllOutgoingCommands();
+                            MasterManager.Instance.CharacterManager.ChangePlayerMaterial(null, (R_E_PT_ClientType == PlayerType.Chaser) ? 1 : 0);
+                        // Rotation lock //
+                            if (R_E_PT_ClientType == PlayerType.Vigilant)
+                                StartCoroutine(ReenableRotation());
                     }
                     private void ExecuteReSpawnDelay()
                     {
@@ -784,7 +831,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                         // Stop If Fallen //
                             if (O_Bool_IsFallen) return;   
                         // Stop If RotationLocked //
-                            if (R_Bool_IsRotationLocked) return;      
+                            if (R_Bool_IsRotationLocked) return; 
                         // Proceed //
                             R_Bool_IsRotating = true;
                             R_Int_CurrentInputRotationX = (Vec2_Input.x < 0)?
@@ -948,12 +995,12 @@ public class BasePlayer : MonoBehaviourPunCallbacks
             private System.Collections.IEnumerator ReenableRotation()
             {
                 R_Bool_IsRotationLocked = true;
-
+                
                 yield return new WaitForSeconds(5f);
 
                 R_Bool_IsRotationLocked = false;
-
-                ReenableRelock();
+        
+                StartCoroutine(ReenableRelock());
             }
             private System.Collections.IEnumerator ReenableRelock()
             {
@@ -963,18 +1010,25 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                 yield return new WaitForSeconds(10f);
 
                 R_Bool_IsRotationLocked = true;
+
+                R_Int_CurrentInputMovementX = 0; 
+                R_Int_CurrentInputMovementY = 0; 
+                R_Int_CurrentInputRotationX = 0;
+                R_Int_CurrentInputRotationY = 0;
+
                 MasterManager.Instance.CharacterManager.SpawnCharacter(IO_Int_ID);
-                ReenableRotation();
+        
+                StartCoroutine(ReenableRotation());
             } 
             private System.Collections.IEnumerator ResetFlipping(float Flt_DelaySeconds)
             {
                 O_Bool_IsFlipped = true;
 
-                I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[2];
+                MasterManager.Instance.CharacterManager.ChangePlayerMaterial(null, 2);
 
                 yield return new WaitForSeconds(Flt_DelaySeconds);
 
-                I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[1];
+                MasterManager.Instance.CharacterManager.ChangePlayerMaterial(null);
         
                 O_Bool_IsFlipped = false;
             }
@@ -982,11 +1036,11 @@ public class BasePlayer : MonoBehaviourPunCallbacks
             {
                 O_Bool_IsFallen = true;
         
-                I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[3];
+                MasterManager.Instance.CharacterManager.ChangePlayerMaterial(null, 3);
 
                 yield return new WaitForSeconds(Flt_DelaySeconds);
         
-                I_GObj_A1_BodyParts[0].GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[4];
+                MasterManager.Instance.CharacterManager.ChangePlayerMaterial(null);
 
                 O_Bool_IsFallen = false;
             }
@@ -1083,6 +1137,8 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                             if (R_E_PT_ClientType != PlayerType.Vigilant) return;
                         // Proceed //
                             Debug.Log("Tagged: Game Over");
+                            // Game Manager Communication // 
+                                MasterManager.Instance.GameManager.GameEnd();
                     }
                 #endregion Damage Type
                 #region    Hijack Type

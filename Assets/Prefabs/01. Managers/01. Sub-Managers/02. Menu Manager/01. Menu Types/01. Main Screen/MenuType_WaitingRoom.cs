@@ -17,6 +17,8 @@ public class MenuTypeWaitingRoom : BaseMenuType
             [SerializeField] GameObject _masterContainer;
             GameObject I_GObj_Master;
             private string[] R_Str_A1_PlayerNames = new string[1];
+            private int Int_VigilantNumber = 0;
+            public int VigilantNumber => Int_VigilantNumber;
         #region    Manager-To-Manager Data
         #endregion Manager-To-Manager Data
         #region    Hashtables (Communication among instances)
@@ -93,7 +95,7 @@ public class MenuTypeWaitingRoom : BaseMenuType
                             // Master Container //
                                 I_Ctm_MLCP_Players.SetMasterContainer(I_GObj_Master);
                             // Update //
-                                UpdateRoom(PUNRI_Room);
+                                ChangeVigilant(PhotonNetwork.LocalPlayer.NickName);
                         }
                     // Client's SendData //
                         else
@@ -101,12 +103,24 @@ public class MenuTypeWaitingRoom : BaseMenuType
                             // Master Container //
                                 I_Ctm_MLCP_Players.SetMasterContainer(I_GObj_Master);
                             // Update //
-                                GetComponent<PhotonView>().RPC(nameof(RPC_AddSelfToMaster),RpcTarget.MasterClient, Str_TempName);
+                                GetComponent<PhotonView>().RPC(nameof(RPC_AddSelfToMaster),RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.NickName);
+                                UpdateRoom();
                         }
                 }
             #endregion Network Manager Specific Methods
         #endregion Custom Methods
         #region    PUN
+            public void ChangeVigilant(string Str_Name)
+            {
+                foreach (Player Plyr in PhotonNetwork.PlayerList)
+                {
+                    if (Plyr.NickName == Str_Name) 
+                    {
+                        GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateVigilantNumber),RpcTarget.All, Plyr.ActorNumber);
+                    }
+                }
+                GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateListToEveryone),RpcTarget.All, new object[] { R_Str_A1_PlayerNames });
+            }
             #region    RPC
                 [PunRPC]
                 private void RPC_AddSelfToMaster(string Str_Player)
@@ -117,7 +131,8 @@ public class MenuTypeWaitingRoom : BaseMenuType
                             AddNewToArray(ref R_Str_A1_PlayerNames, Str_Player);
                             UpdateRoom();
                         // Force Update Other Client's Room Prefab //
-                            GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateListToClients),RpcTarget.All, new object[] { R_Str_A1_PlayerNames }); // ¿Por que object? PORQUE NO PARABA DE DAR FAIL Y ME VOLVIO LOCO!!!1! <3 //
+                            GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateVigilantNumber),RpcTarget.All, Int_VigilantNumber);
+                            GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateListToEveryone),RpcTarget.All, new object[] { R_Str_A1_PlayerNames }); // ¿Por que object? PORQUE NO PARABA DE DAR FAIL Y ME VOLVIO LOCO!!!1! <3 //
                     }
                 }
                 [PunRPC]
@@ -127,7 +142,9 @@ public class MenuTypeWaitingRoom : BaseMenuType
                         RemoveSpecificFromArray(ref R_Str_A1_PlayerNames, Str_Player);
                         UpdateRoom();
                     // Force Update Other Client's Room Prefab //
-                        GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateListToClients),RpcTarget.All, new object[] { R_Str_A1_PlayerNames }); // ¿Por que object? PORQUE NO PARABA DE DAR FAIL Y ME VOLVIO LOCO!!!1! <3 //
+                        GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateVigilantNumber),RpcTarget.All, Int_VigilantNumber);
+                        GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateVigilantNumber),RpcTarget.All, Int_VigilantNumber);
+                        GetComponent<PhotonView>().RPC(nameof(RPC_ForceUpdateListToEveryone),RpcTarget.All, new object[] { R_Str_A1_PlayerNames }); // ¿Por que object? PORQUE NO PARABA DE DAR FAIL Y ME VOLVIO LOCO!!!1! <3 //
                 }
                 [PunRPC]
                 private void RPC_ForceUpdateListToClients(string[] Str_A1_PlayerList)
@@ -138,6 +155,22 @@ public class MenuTypeWaitingRoom : BaseMenuType
                         SetUpRoom();
                         UpdateRoom();
                     }
+                }
+                [PunRPC]
+                private void RPC_ForceUpdateListToEveryone(string[] Str_A1_PlayerList)
+                {
+                    R_Str_A1_PlayerNames = Str_A1_PlayerList;
+                    UpdateRoom();
+                    SetUpRoom();
+                }
+                [PunRPC]
+                private void RPC_ForceUpdateVigilantNumber(int Int_Input)
+                {
+                    Int_VigilantNumber = Int_Input;
+                    if (PhotonNetwork.LocalPlayer.ActorNumber != Int_Input)
+                        MasterManager.Instance.CharacterManager.Changetype(PlayerType.Chaser);
+                    else
+                        MasterManager.Instance.CharacterManager.Changetype(PlayerType.Vigilant);
                 }
             #endregion RPC
         #endregion PUN

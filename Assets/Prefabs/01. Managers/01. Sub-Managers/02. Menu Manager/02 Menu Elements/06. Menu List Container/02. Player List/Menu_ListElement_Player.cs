@@ -11,6 +11,9 @@ public class MenuListElementPlayer : BaseMenuListElement
         [Header("Room List Element Settings")]
             [SerializeField] BaseMenuLabel _label;
             protected static BaseMenuLabel I_BML_Element;
+            [SerializeField] Button _button;
+            protected static Button I_Btn_Button;
+            public Button Button => I_Btn_Button;
             protected static string I_str_Value;
     #endregion Variables
     #region    Methods
@@ -19,6 +22,7 @@ public class MenuListElementPlayer : BaseMenuListElement
             {
                 // Variables //
                     I_BML_Element = _label;
+                    I_Btn_Button = _button;
                 // Resume Base //
                     base.Awake();
             }
@@ -37,6 +41,7 @@ public class MenuListElementPlayer : BaseMenuListElement
                     base.SetUp(GObj_Master, Obj_Element);
                 // Appearance //
                     MasterContainer.AddNewElement(I_BML_Element);
+                    Button.image.color = Color.white;
                 return this;
             }
             public override void SetMasterContainer(GameObject GObj_Master) 
@@ -76,6 +81,21 @@ public class MenuListElementPlayer : BaseMenuListElement
             }
         #endregion Override Methods
         #region    Custom Methods
+            public void ButtonColor(bool Bool_IsVigilant)
+            {
+                if (!Bool_IsVigilant)
+                    Button.image.color = Color.white;
+                else
+                    Button.image.color = Color.red;
+            }
+            public void ChangeVigilant()
+            {
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    // Force Update Other Client's Room Prefab //
+                        (GameObject.Find("WaitingRoom")).GetComponent<MenuTypeWaitingRoom>().ChangeVigilant(transform.GetChild(0).GetComponent<TMP_Text>().text);
+                }
+            }
         #endregion Custom Methods
     #endregion Methods
 }
