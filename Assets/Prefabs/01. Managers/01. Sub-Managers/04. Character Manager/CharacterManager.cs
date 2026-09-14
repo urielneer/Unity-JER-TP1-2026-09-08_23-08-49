@@ -280,6 +280,7 @@ public class CharacterManager : BaseManager<CharacterManager>
                 {
                     if (R_Bool_GameOver) return;
                     GetComponent<PhotonView>().RPC(nameof(RPC_EndGame), RpcTarget.All, Bool_VigilantWon);
+                    MasterManager.Instance.MenuManager.SwitchScene(1);
                 }
                 [SerializeField] private float _restartDelay = 5f;
                 [SerializeField] private float _cleanRestartPause = 1.5f;

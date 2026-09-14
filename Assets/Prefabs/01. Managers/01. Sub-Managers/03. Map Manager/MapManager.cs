@@ -373,51 +373,51 @@ public class MapManager : BaseManager<MapManager>
                 }
     #endregion Regular Methods
     #endregion Custom Methods
-    #region    Coroutines Methods
-    private System.Collections.IEnumerator SpawnPickupsPeriodically()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(I_Flt_PickupSpawnInterval);
-            // Guard //
-            if (I_Str_A1_PickupResourcePaths == null || I_Str_A1_PickupResourcePaths.Length == 0) continue;
-            // Spawn - Fixed Range Along The Corridor //
-            string Str_PickupPath = I_Str_A1_PickupResourcePaths[Random.Range(0, I_Str_A1_PickupResourcePaths.Length)];
-            // Mismo sistema de coordenadas que GenerateMap: crece de (0,0,0) hacia +X y -Z //
-            float Flt_MaxX = (I_Int_MapLengthX - 1) * I_Int_TileRadius * 2f;
-            float Flt_MinZ = -(I_Int_MapLengthY - 1) * I_Int_TileRadius * 2f;
-            Vector3 Vec3_PickupPos = new Vector3(Random.Range(0f, Flt_MaxX), 0.5f, Random.Range(Flt_MinZ, 0f));
-            // Pool - Crear las piezas una sola vez //
-            if (R_Ctm_Pkp_A1_Pool.Length < I_Int_MaxActivePickups)
+        #region    Coroutines Methods
+            private System.Collections.IEnumerator SpawnPickupsPeriodically()
             {
-                GameObject GObj_New = PhotonNetwork.Instantiate(Str_PickupPath, Vec3_PickupPos, Quaternion.identity);
-                if (GObj_New == null) continue;
-                GObj_New.transform.SetParent(I_Trfm_MapContainer);
-                Pickupable Ctm_Pkp_New = GObj_New.GetComponent<Pickupable>();
-                if (Ctm_Pkp_New == null) continue;
-                AddNewToArray(ref R_Ctm_Pkp_A1_Pool, Ctm_Pkp_New);
-                Ctm_Pkp_New.PoolSpawn(Vec3_PickupPos, Random.Range(0, 4));
-                continue;
+                while (true)
+                {
+                    yield return new WaitForSeconds(I_Flt_PickupSpawnInterval);
+                    // Guard //
+                    if (I_Str_A1_PickupResourcePaths == null || I_Str_A1_PickupResourcePaths.Length == 0) continue;
+                    // Spawn - Fixed Range Along The Corridor //
+                    string Str_PickupPath = I_Str_A1_PickupResourcePaths[Random.Range(0, I_Str_A1_PickupResourcePaths.Length)];
+                    // Mismo sistema de coordenadas que GenerateMap: crece de (0,0,0) hacia +X y -Z //
+                    float Flt_MaxX = (I_Int_MapLengthX - 1) * I_Int_TileRadius * 2f;
+                    float Flt_MinZ = -(I_Int_MapLengthY - 1) * I_Int_TileRadius * 2f;
+                    Vector3 Vec3_PickupPos = new Vector3(Random.Range(0f, Flt_MaxX), 0.5f, Random.Range(Flt_MinZ, 0f));
+                    // Pool - Crear las piezas una sola vez //
+                    if (R_Ctm_Pkp_A1_Pool.Length < I_Int_MaxActivePickups)
+                    {
+                        GameObject GObj_New = PhotonNetwork.Instantiate(Str_PickupPath, Vec3_PickupPos, Quaternion.identity);
+                        if (GObj_New == null) continue;
+                        GObj_New.transform.SetParent(I_Trfm_MapContainer);
+                        Pickupable Ctm_Pkp_New = GObj_New.GetComponent<Pickupable>();
+                        if (Ctm_Pkp_New == null) continue;
+                        AddNewToArray(ref R_Ctm_Pkp_A1_Pool, Ctm_Pkp_New);
+                        Ctm_Pkp_New.PoolSpawn(Vec3_PickupPos, Random.Range(0, 4));
+                        continue;
+                    }
+                    // Pool - Reutilizar una pieza libre //
+                    Pickupable Ctm_Pkp_Free = null;
+                    foreach (Pickupable Ctm_Pkp_Candidate in R_Ctm_Pkp_A1_Pool)
+                    {
+                        if (Ctm_Pkp_Candidate == null) continue;
+                        if (Ctm_Pkp_Candidate.InUse) continue;
+                        Ctm_Pkp_Free = Ctm_Pkp_Candidate;
+                        break;
+                    }
+                    // Todas en uso, esperar al proximo ciclo //
+                    if (Ctm_Pkp_Free == null) continue;
+                    Ctm_Pkp_Free.PoolSpawn(Vec3_PickupPos, Random.Range(0, 4));
+                }
             }
-            // Pool - Reutilizar una pieza libre //
-            Pickupable Ctm_Pkp_Free = null;
-            foreach (Pickupable Ctm_Pkp_Candidate in R_Ctm_Pkp_A1_Pool)
-            {
-                if (Ctm_Pkp_Candidate == null) continue;
-                if (Ctm_Pkp_Candidate.InUse) continue;
-                Ctm_Pkp_Free = Ctm_Pkp_Candidate;
-                break;
-            }
-            // Todas en uso, esperar al proximo ciclo //
-            if (Ctm_Pkp_Free == null) continue;
-            Ctm_Pkp_Free.PoolSpawn(Vec3_PickupPos, Random.Range(0, 4));
-        }
-    }
-    #endregion Coroutines Methods
-    #region    PUN         
-    #region    Hastable
-    // Map //
-    public void ApplyMapManagerProperties(Hashtable Hsh_Input)
+        #endregion Coroutines Methods
+        #region    PUN         
+            #region    Hastable
+                // Map //
+                    public void ApplyMapManagerProperties(Hashtable Hsh_Input)
                     {
                         I_Int_TileRadius =          (int) Hsh_Input[MapTileRadius_KEY];
                         R_Int_A2_MapData = new int[I_Int_MapLengthX, I_Int_MapLengthY];

@@ -790,11 +790,8 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                                     }
                             }
                         // Position - Si el mapa todavia no genero los spawnpoints, se reintenta //
-                            if (!TryPositionAtSpawnPoint())
-                            {
-                                if (R_Crtn_SpawnRetry != null) StopCoroutine(R_Crtn_SpawnRetry);
-                                R_Crtn_SpawnRetry = StartCoroutine(RetrySpawnPositionRoutine());
-                            }
+                            this.transform.position = MasterManager.Instance.MapManager.SpawnPoints[PhotonNetwork.LocalPlayer.ActorNumber].transform.position;
+                            this.transform.rotation = MasterManager.Instance.MapManager.SpawnPoints[PhotonNetwork.LocalPlayer.ActorNumber].transform.rotation;
                         // Visibility //
                             SetVisibility(true);
                             PhotonNetwork.SendAllOutgoingCommands();
