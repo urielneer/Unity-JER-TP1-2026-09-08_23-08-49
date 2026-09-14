@@ -2579,15 +2579,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7137913161505292464, guid: 917223d98f354a0419d6f0ca1a92cbe7, type: 3}
       propertyPath: m_fontColor.b
-      value: 0.5411765
+      value: 0.4509804
       objectReference: {fileID: 0}
     - target: {fileID: 7137913161505292464, guid: 917223d98f354a0419d6f0ca1a92cbe7, type: 3}
       propertyPath: m_fontColor.r
-      value: 0.44452736
+      value: 0.35261315
       objectReference: {fileID: 0}
     - target: {fileID: 7137913161505292464, guid: 917223d98f354a0419d6f0ca1a92cbe7, type: 3}
       propertyPath: m_fontColor32.rgba
-      value: 4287234161
+      value: 4285726810
       objectReference: {fileID: 0}
     - target: {fileID: 7187508027572229237, guid: 917223d98f354a0419d6f0ca1a92cbe7, type: 3}
       propertyPath: m_AnchorMax.y

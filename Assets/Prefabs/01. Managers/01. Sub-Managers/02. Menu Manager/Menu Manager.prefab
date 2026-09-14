@@ -4544,7 +4544,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4622068268417441402, guid: 14538679b6d512444923c638f71db558, type: 3}
       propertyPath: _titleName
-      value: Tanktastrophe
+      value: Chase Mania
       objectReference: {fileID: 0}
     - target: {fileID: 4791226853746843518, guid: 14538679b6d512444923c638f71db558, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -4664,7 +4664,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7287545267821329955, guid: 14538679b6d512444923c638f71db558, type: 3}
       propertyPath: m_text
-      value: Tanktastrophe
+      value: Chase Mania
       objectReference: {fileID: 0}
     - target: {fileID: 7287545267821329955, guid: 14538679b6d512444923c638f71db558, type: 3}
       propertyPath: m_fontColor.a
