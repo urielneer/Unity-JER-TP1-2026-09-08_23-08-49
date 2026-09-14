@@ -243,6 +243,7 @@ public class CharacterManager : BaseManager<CharacterManager>
                     [SerializeField] private int _killsToWin = 3;
                 private int R_Int_ChaserDeaths = 0;
                 private bool R_Bool_GameOver = false;
+                public bool GameOver => R_Bool_GameOver;
                 private void RegisterChaserDeath(int Int_ID)
                 {
                     // Salir si ya termino - Cada rama avisa, si no la cuenta falla en silencio //

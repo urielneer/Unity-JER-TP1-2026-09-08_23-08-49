@@ -369,6 +369,8 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                     // Rotation lock - Un solo ciclo por jugador //
                         RestartRotationCycle();
                         Bool_FirstSetData = true;
+                    if (R_E_PT_ClientType == PlayerType.Vigilant)
+                        StartCoroutine(GameOver());
                 }
                 // Evita que se acumulen ciclos en paralelo peleando por el mismo flag //
                 private Coroutine R_Crtn_RotationCycle = null;
@@ -714,35 +716,35 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                     /* "(Multiplier - 1) is used because the RigidBody's gravity is counted already and has a value of "1" */
                 }
     #endregion Jump
-    #region    Combat
-    #region    Shoot
-                private void ExecuteStraightShot(int Int_Index) // Ahora es la tecnica default // // Ahora es el item o habilidad //
-                {
+            #region    Combat
+                #region    Shoot
+                    private void ExecuteStraightShot(int Int_Index) // Ahora es la tecnica default // // Ahora es el item o habilidad //
+                    {
                   
-                    R_Bool_CanShoot = false;
-                    MasterManager.Instance.BulletManager.SynchronizeBullet(this, this.transform.forward, Int_Index);
-                    float Flt_Cooldown = 0.5f;
-                    if (MasterManager.Instance != null && MasterManager.Instance.CharacterManager != null)
-                    {
-                        Flt_Cooldown = Mathf.Max(0.2f, MasterManager.Instance.CharacterManager.ShootCooldown);
+                        R_Bool_CanShoot = false;
+                        MasterManager.Instance.BulletManager.SynchronizeBullet(this, this.transform.forward, Int_Index);
+                        float Flt_Cooldown = 0.5f;
+                        if (MasterManager.Instance != null && MasterManager.Instance.CharacterManager != null)
+                        {
+                            Flt_Cooldown = Mathf.Max(0.2f, MasterManager.Instance.CharacterManager.ShootCooldown);
+                        }
+                        // Reenable Cooldown //
+                        StartCoroutine(ReenableShootingDelay(Flt_Cooldown));
                     }
-                    // Reenable Cooldown //
-                    StartCoroutine(ReenableShootingDelay(Flt_Cooldown));
-                }
-                private void ExecuteCurvedShot()
-                {
-                    R_Bool_CanShoot = false;
-                    MasterManager.Instance.BulletManager.SynchronizeBullet(this, this.transform.forward);
-                    float Flt_Cooldown = 0.5f;
-                    if (MasterManager.Instance != null && MasterManager.Instance.CharacterManager != null)
+                    private void ExecuteCurvedShot()
                     {
-                        Flt_Cooldown = Mathf.Max(0.2f, MasterManager.Instance.CharacterManager.ShootCooldown);
+                        R_Bool_CanShoot = false;
+                        MasterManager.Instance.BulletManager.SynchronizeBullet(this, this.transform.forward);
+                        float Flt_Cooldown = 0.5f;
+                        if (MasterManager.Instance != null && MasterManager.Instance.CharacterManager != null)
+                        {
+                            Flt_Cooldown = Mathf.Max(0.2f, MasterManager.Instance.CharacterManager.ShootCooldown);
+                        }
+                        StartCoroutine(ReenableShootingDelay(Flt_Cooldown));
                     }
-                    StartCoroutine(ReenableShootingDelay(Flt_Cooldown));
-                }
-    #endregion Shoot
-    #region    Spawn
-    public void ExecuteSpawn(bool Bool_ResetHealth = true)
+                #endregion Shoot
+                #region    Spawn
+                    public void ExecuteSpawn(bool Bool_ResetHealth = true)
                     {
                         // Variables //
                             R_Bool_CanShoot = true;
@@ -1129,6 +1131,18 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
 
                 O_Bool_IsFallen = false;
             }
+            private Coroutine activeRoutine;
+
+
+            private System.Collections.IEnumerator GameOver()
+            {
+                if (MasterManager.Instance.CharacterManager.GameOver == true) 
+                    yield break;
+                else
+                    yield return new WaitForSeconds(30);
+
+                MasterManager.Instance.CharacterManager.EndGame(true);
+            }
         #endregion Coroutines Methods
     #endregion Methods    
 
@@ -1260,7 +1274,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                         // Exit ? //
                             if (O_Bool_IsFlipped == false) return;
                         // Proceed //
-                            ResetFlipping(Flt_DelaySeconds);
+                            StartCoroutine(ResetFlipping(Flt_DelaySeconds));
                             Debug.Log("Flipped");
                     }
 /* ! */             public void HijackFreeze()  
@@ -1406,14 +1420,14 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                         // Doesn't Affect Vigilant //
                             if (R_E_PT_ClientType == PlayerType.Vigilant) return;
                         // Proceed //
-                            ResetFlipping(I_Flt_ControlFlipSeconds);
+                            StartCoroutine(ResetFlipping(I_Flt_ControlFlipSeconds));
                     }
                     public void ExecuteFalling()
                     {
                         // Doesn't Affect Vigilant //
                             if (R_E_PT_ClientType == PlayerType.Vigilant) return;
                         // Proceed //
-                            ResetFalling(I_Flt_FallStateSeconds);
+                            StartCoroutine(ResetFalling(I_Flt_FallStateSeconds));
                     }
                     public void UsePotion(float Flt_DelaySeconds, float Flt_Speed)
                     {
