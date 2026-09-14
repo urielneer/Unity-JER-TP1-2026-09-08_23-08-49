@@ -320,6 +320,9 @@ MonoBehaviour:
   _prefabMouse: {fileID: 8991975496814794910, guid: 08a2f10cf4782ed4eb12591f4c7f5ab6, type: 3}
   _mouseSpeed: 30
   _maxDistances: {x: 21, y: 7}
+  _collisionLayers:
+    serializedVersion: 2
+    m_Bits: 512
   _cameraAnchor: {fileID: 5131294668187058300}
   _cameraPosition: {x: 0, y: 0.8, z: 1.3}
   _cameraRotation: {x: -2.8, y: 180, z: 0}

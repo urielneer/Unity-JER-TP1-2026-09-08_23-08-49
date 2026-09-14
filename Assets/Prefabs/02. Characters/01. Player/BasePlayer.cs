@@ -457,7 +457,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                     Vec3_Displacement += XAxisMovement(Flt_FixedDT);
                     Vec3_Displacement += YAxisMovement(Flt_FixedDT);
 
-                    // Chequeo de Fricción //
+                    // Chequeo de Fricciï¿½n //
                     Collider selfCol = GetComponent<Collider>();
                     bool isSliding = selfCol != null && selfCol.material != null && selfCol.material.dynamicFriction < 0.1f;
 
@@ -1019,8 +1019,8 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                         { 
                             if (Int_ItemIndex == -1)
                                 Int_ItemIndex = Col_Hit.GetComponent<Pickupable>().Type;
-                                Destroy(Col_Hit);
-/* ! */                     //Menu Update//
+                                Destroy(Col_Hit.gameObject);
+                            ((MenuTypeHUD) MasterManager.Instance.MenuManager.GetMenuReference("HUD")).UpdateItemDisplay(Int_ItemIndex);
                         }
                     
                 }
@@ -1040,15 +1040,15 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                         foreach (Collider Col_Hit in Col_A1_HitBuffer)
                         {
                             // Ignore Own Collision //
-                                if (Col_Hit == this.gameObject.GetComponent<MeshCollider>()) continue;
+                                if (Col_Hit == I_GObj_A1_BodyParts[0].gameObject.GetComponent<MeshCollider>()) continue;
                             // Ignore null //
                                 if (Col_Hit == null) continue;
                             // Compute Overlap //
                                 bool Bool_IsOverlapping = Physics.ComputePenetration(
                                                                                         // In //
-                                                                                            this.gameObject.GetComponent<MeshCollider>(),
-                                                                                            this.gameObject.GetComponent<MeshCollider>().transform.position,
-                                                                                            this.gameObject.GetComponent<MeshCollider>().transform.rotation,
+                                                                                            I_GObj_A1_BodyParts[0].gameObject.GetComponent<MeshCollider>(),
+                                                                                            I_GObj_A1_BodyParts[0].gameObject.GetComponent<MeshCollider>().transform.position,
+                                                                                            I_GObj_A1_BodyParts[0].gameObject.GetComponent<MeshCollider>().transform.rotation,
                                                                                             Col_Hit,
                                                                                             Col_Hit.transform.position,
                                                                                             Col_Hit.transform.rotation,
@@ -1173,7 +1173,7 @@ public class BasePlayer : MonoBehaviourPunCallbacks
                             if (R_E_PT_ClientType == PlayerType.Vigilant) return;
                         // Proceed //
                             Int_ItemIndex = -1;
-/* ! */                     //Menu Update//
+                            ((MenuTypeHUD) MasterManager.Instance.MenuManager.GetMenuReference("HUD")).UpdateItemDisplay(Int_ItemIndex);
                     }
                 #endregion Item Type
                 #region    Hijack Type
