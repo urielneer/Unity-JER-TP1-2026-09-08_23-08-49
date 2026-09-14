@@ -58,6 +58,8 @@ MonoBehaviour:
   - RPC_AlertCharacterRespawnToClients
   - RPC_MasterWaitCompleted
   - RPC_ReduceClientLoadCounter
+  - RPC_SpawnCharacter
+  - RPC_CharacterMaterial
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0

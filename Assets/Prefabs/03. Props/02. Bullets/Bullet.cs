@@ -31,30 +31,33 @@ public class Bullet : MonoBehaviourPunCallbacks
                 I_Mat_A1_Materials = _materials;
                 I_Flt_Lifetime = _lifetime;
                 I_LyrM_DetectionLayers = _detectionLayers;
+            }public override void OnEnable()
+            {
+                base.OnEnable();
+                // Ensure bullet is unparented to prevent remote transform hierarchy jitter
+                transform.SetParent(null);
             }
-            void FixedUpdate() 
+            void Update() 
             {
                 /* Managing each in a manager would be a hassle as long as this  
                 uses a "Peer To Peer" like logic. Each bullet would have it's  
                 own Photon View ID (which would ruin everything) */
-                OnFixedUpdate(Time.fixedDeltaTime);
+                OnUpdate(Time.fixedDeltaTime);
             }
         #endregion Unity Methods
         #region    Override Methods
             public virtual void OnStartUp()
             {
-                R_Vec3_Speed = I_Vec3_BP_Dir * I_Flt_Speed;
-                R_Ctm_BP_Target = null;
                 Destroy(this.gameObject, I_Flt_Lifetime);
             }
-            public virtual void OnFixedUpdate(float Flt_FixedDT)
+            public virtual void OnUpdate(float Flt_FixedDT)
             {
                 ExecuteMovement(Flt_FixedDT);
             }
         #endregion Override Methods
         #region    Custom Methods
             #region    Set Up
-                public void SetData(string Str_Input, int Int_Input, Vector3 Vec3_Input, float Flt_Input1, float Flt_Input2, int Int_Input2)
+                public void SetData(string Str_Input, int Int_Input, Vector3 Vec3_Input, float Flt_Input1, float Flt_Input2, int Int_Input2 = 0)
                 {
                     I_Str_OwnerNickname = Str_Input;
                     I_Int_BP_OwnerID = Int_Input;
@@ -62,6 +65,10 @@ public class Bullet : MonoBehaviourPunCallbacks
                     I_Flt_Speed = Flt_Input1;
                     I_Flt_Damage = Flt_Input2;
                     I_Int_Type = Int_Input2;
+
+                    R_Vec3_Speed = I_Vec3_BP_Dir * I_Flt_Speed;
+                    R_Ctm_BP_Target = null;
+
                     this.gameObject.GetComponent<MeshRenderer>().material = I_Mat_A1_Materials[I_Int_Type];
                 }
             #endregion Set Up
@@ -102,42 +109,19 @@ public class Bullet : MonoBehaviourPunCallbacks
                 {
                     // Variables //
                         float Flt_Distance = R_Vec3_Speed.magnitude * Flt_FixedDT;
+                        Vector3 Vec3_Step = R_Vec3_Speed * Flt_FixedDT;
                         Bounds Bnds_Self = this.gameObject.GetComponent<MeshCollider>().bounds;
-                        Collider[] Col_A1_HitBuffer = new Collider[10];
-                        int Int_Count  = Physics.OverlapBoxNonAlloc(
-                                                                        Bnds_Self.center,
-                                                                        Bnds_Self.extents,
-                                                                        Col_A1_HitBuffer,
-                                                                        transform.rotation,
-                                                                        I_LyrM_DetectionLayers
-                                                                   );
+                    // Proceed ? //
+                        if (Flt_Distance <= 0f) return;
                     // Collisions //
-                        foreach (Collider Col_Hit in Col_A1_HitBuffer)
+                        if (Physics.Raycast(transform.position, I_Vec3_BP_Dir, out RaycastHit hit, Flt_Distance, I_LyrM_DetectionLayers))
                         {
-                            // Ignore Own Collision //
-                                if (Col_Hit == this.gameObject.GetComponent<MeshCollider>()) continue;
-                            // Ignore null //
-                                if (Col_Hit == null) continue;
-                            // Compute Overlap //
-                                bool Bool_IsOverlapping = Physics.ComputePenetration(
-                                                                                        // In //
-                                                                                            this.gameObject.GetComponent<MeshCollider>(),
-                                                                                            this.gameObject.GetComponent<MeshCollider>().transform.position,
-                                                                                            this.gameObject.GetComponent<MeshCollider>().transform.rotation,
-                                                                                            Col_Hit,
-                                                                                            Col_Hit.transform.position,
-                                                                                            Col_Hit.transform.rotation,
-                                                                                        // Out //
-                                                                                            out Vector3 Vec3_Dir,
-                                                                                            out float Flt_OverlappingDistance
-                                                                                    );
-                                if ( Bool_IsOverlapping )
-                                { 
-                                    OnHit(Col_Hit);
-                                }
+                            transform.position = hit.point;
+                            OnHit(hit.collider);
+                            return;
                         }
                     // Move //
-                        transform.Translate(R_Vec3_Speed * Flt_FixedDT, Space.World);
+                        transform.Translate(Vec3_Step, Space.World);
                 }
             #endregion Movement
         #endregion Custom Methods

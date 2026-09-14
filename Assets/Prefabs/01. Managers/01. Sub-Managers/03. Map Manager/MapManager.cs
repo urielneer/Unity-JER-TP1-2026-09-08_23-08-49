@@ -108,7 +108,7 @@ public class MapManager : BaseManager<MapManager>
                                             // Wait //
                                                 bool Bool_Success = await R_Bool_AllPlayersFinished.Task;
                                             // Inform Completion //
-                                                I_Trfm_MapContainer.GetComponent<MapContainer>().MasterWaitCompleted();
+                                                MasterWaitCompleted();
                                         // Proceed //
                                                 MasterManager.Instance.StartUpProceed();
 
@@ -121,12 +121,12 @@ public class MapManager : BaseManager<MapManager>
                                             // Wait //
                                                 bool Bool_Success1 = await R_Bool_StartupCompleted.Task;
                                             // Inform Completion //
-                                                I_Trfm_MapContainer.GetComponent<MapContainer>().ReduceClientLoadCounter();
-                                        // Async Await - Wait For "Load" //
+                                                ReduceClientLoadCounter();
+                                        // Async Await - Wait For Master //
                                             // Wait //
                                                 bool Bool_Success2 = await R_Bool_MasterStartupCompleted.Task;
                                             // Inform Completion //
-                                                I_Trfm_MapContainer.GetComponent<MapContainer>().ReduceClientLoadCounter();
+                                                // ReduceClientLoadCounter();
                                         // Proceed //
                                                 MasterManager.Instance.StartUpProceed();
 
@@ -310,7 +310,7 @@ public class MapManager : BaseManager<MapManager>
                             { MapData_KEY      , Int_A1_TempMapData   },
                             { MapWallIDs_KEY   , R_Int_A1_WallIDs     },
                         }; 
-                        I_Trfm_MapContainer.GetComponent<MapContainer>().UpdateAllMapManagers(Hsh_MapKeys);
+                        UpdateAllMapManagers(Hsh_MapKeys);
                     #endregion Synchronize
                 }
                 public void LoadMap()
@@ -329,18 +329,88 @@ public class MapManager : BaseManager<MapManager>
                 public void MatserStartUpCompleted() { R_Bool_MasterStartupCompleted?.TrySetResult(true); }
             #endregion Regular Methods
         #endregion Custom Methods
-        #region    PUN     
+        #region    PUN         
             #region    Hastable
-                public void ApplyMapManagerProperties(Hashtable Hsh_Input)
-                {
-                    I_Int_TileRadius =          (int) Hsh_Input[MapTileRadius_KEY];
-                    R_Int_A2_MapData = new int[I_Int_MapLengthX, I_Int_MapLengthY];
-                    SetBounds((int)Hsh_Input[MapAxisX_KEY], (int)Hsh_Input[MapAxisY_KEY]);
-                    UnFlatten1DArray((int[]) Hsh_Input[MapData_KEY], I_Int_MapLengthX, I_Int_MapLengthY, out int[,] Int_A2_TempMapData);
-                    R_Int_A2_MapData = Int_A2_TempMapData;
-                    R_Int_A1_WallIDs  = (int[])Hsh_Input[MapWallIDs_KEY];
-                }
-            #endregion Hastable
+                // Map //
+                    public void ApplyMapManagerProperties(Hashtable Hsh_Input)
+                    {
+                        I_Int_TileRadius =          (int) Hsh_Input[MapTileRadius_KEY];
+                        R_Int_A2_MapData = new int[I_Int_MapLengthX, I_Int_MapLengthY];
+                        SetBounds((int)Hsh_Input[MapAxisX_KEY], (int)Hsh_Input[MapAxisY_KEY]);
+                        UnFlatten1DArray((int[]) Hsh_Input[MapData_KEY], I_Int_MapLengthX, I_Int_MapLengthY, out int[,] Int_A2_TempMapData);
+                        R_Int_A2_MapData = Int_A2_TempMapData;
+                        R_Int_A1_WallIDs  = (int[])Hsh_Input[MapWallIDs_KEY];
+                    }
+                    public void ReduceClientLoadCounter()
+                    {
+                        GetComponent<PhotonView>().RPC(nameof(RPC_ReduceClientLoadCounter), RpcTarget.MasterClient); 
+                    }
+                    public void MasterWaitCompleted()
+                    {
+                        GetComponent<PhotonView>().RPC(nameof(RPC_MasterWaitCompleted), RpcTarget.All); 
+                    }
+                    public void UpdateAllMapManagers(Hashtable Hsh_MapKeys)
+                    {
+                        GetComponent<PhotonView>().RPC(nameof(RPC_ForceMapUpdateToClients), RpcTarget.All, Hsh_MapKeys); 
+                    }
+                    private bool AreMapManagerHashtables(Hashtable Hsh_Input)
+                    {
+                        if (
+                            Hsh_Input.ContainsKey(MapTileRadius_KEY) &&
+                            Hsh_Input.ContainsKey(MapAxisX_KEY)      &&
+                            Hsh_Input.ContainsKey(MapAxisY_KEY)      &&
+                            Hsh_Input.ContainsKey(MapData_KEY)       &&
+                            Hsh_Input.ContainsKey(MapWallIDs_KEY)
+                           )
+                        { 
+                            return true; 
+                        }
+                        else
+                        { 
+                            UnityEngine.Debug.LogError("\"MapContiner.cs\"'s \"AreMapManagerHashtables()\" returned FALSE, review Hastables");
+                            return false; 
+                        }
+                    }
+            #endregion Hastable  
+            #region    RPC
+                #region    Hashtables
+                    // Map //
+                        [PunRPC]
+                        private void RPC_ForceMapUpdateToClients(Hashtable Hsh_Properties)
+                        {
+                            if (!PhotonNetwork.IsMasterClient)
+                            {
+                                if (AreMapManagerHashtables(Hsh_Properties))
+                                {
+                                    // Import new properties //
+                                        MasterManager.Instance.MapManager.ApplyMapManagerProperties(Hsh_Properties);                           
+                                    // Load Map //
+                                        MasterManager.Instance.MapManager.LoadMap();
+                                    // MenuManager - Switch Screen //
+                                        MasterManager.Instance.MenuManager.OpenMenu("HUD"); 
+                                }
+                            }
+                        }
+                #endregion Hashtables 
+                #region    Await
+                        [PunRPC]
+                        private void RPC_ReduceClientLoadCounter()
+                        {
+                            if (PhotonNetwork.IsMasterClient)
+                            {
+                                    MasterManager.Instance.MapManager.ReduceCountdown();     
+                            }
+                        }
+                        [PunRPC]
+                        private void RPC_MasterWaitCompleted()
+                        {
+                            if (!PhotonNetwork.IsMasterClient)
+                            {
+                                    MasterManager.Instance.MapManager.MatserStartUpCompleted();     
+                            }
+                        }
+                #endregion Await 
+            #endregion RPC
         #endregion PUN
     #endregion Methods
 }
