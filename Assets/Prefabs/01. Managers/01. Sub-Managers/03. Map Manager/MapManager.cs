@@ -25,9 +25,13 @@ public class MapManager : BaseManager<MapManager>
             private FloorTile_R[] I_Ctm_FPR_A1_RockTiles;
             [SerializeField] private FloorTile_W[] _wallTiles;
             private FloorTile_W[] I_Ctm_FPW_A1_WallTiles;
-        #endregion Tiles
-        #region    Map
-            [SerializeField] private int _mapLengthX;
+            [SerializeField] private string[] _pickupResourcePaths;
+            private string[] I_Str_A1_PickupResourcePaths;
+            [SerializeField] private float _pickupSpawnInterval = 15f;
+            private float I_Flt_PickupSpawnInterval;
+    #endregion Tiles
+    #region    Map
+    [SerializeField] private int _mapLengthX;
             private int I_Int_MapLengthX;
             [SerializeField] private int _mapLengthY;
             private int I_Int_MapLengthY;
@@ -63,6 +67,8 @@ public class MapManager : BaseManager<MapManager>
                     I_Int_TileRadius = _tileRadius;
                     I_Ctm_FPR_A1_RockTiles = _rockTiles;
                     I_Ctm_FPW_A1_WallTiles = _wallTiles;
+                    I_Str_A1_PickupResourcePaths = _pickupResourcePaths;
+                    I_Flt_PickupSpawnInterval = _pickupSpawnInterval;
                     SetBounds(_mapLengthX, _mapLengthY);
             }
         #endregion Unity Methods
@@ -98,8 +104,10 @@ public class MapManager : BaseManager<MapManager>
                                             ReduceCountdown();
                                         // MapManager - Generate Map Data //
                                             GenerateMap();
-                                        // MenuManager - Switch Screen //
-                                            MasterManager.Instance.MenuManager.OpenMenu("HUD"); 
+                                    // Pickups - Start Periodic Spawn //
+                                    StartCoroutine(SpawnPickupsPeriodically());
+                                    // MenuManager - Switch Screen //
+                                    MasterManager.Instance.MenuManager.OpenMenu("HUD"); 
                                         // Async Await - Wait For "All Loads" //
                                             // Wait //
                                                 bool Bool_Success = await R_Bool_AllPlayersFinished.Task;
@@ -324,12 +332,33 @@ public class MapManager : BaseManager<MapManager>
                     if (R_Int_PlayersRemaining == 0) { R_Bool_AllPlayersFinished?.TrySetResult(true); }
                 }
                 public void MatserStartUpCompleted() { R_Bool_MasterStartupCompleted?.TrySetResult(true); }
-            #endregion Regular Methods
-        #endregion Custom Methods
-        #region    PUN         
-            #region    Hastable
-                // Map //
-                    public void ApplyMapManagerProperties(Hashtable Hsh_Input)
+    #endregion Regular Methods
+    #endregion Custom Methods
+    #region    Coroutines Methods
+    private System.Collections.IEnumerator SpawnPickupsPeriodically()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(I_Flt_PickupSpawnInterval);
+            // Guard //
+            if (I_Str_A1_PickupResourcePaths == null || I_Str_A1_PickupResourcePaths.Length == 0) continue;
+            // Spawn - Fixed Range Along The Corridor //
+            string Str_PickupPath = I_Str_A1_PickupResourcePaths[Random.Range(0, I_Str_A1_PickupResourcePaths.Length)];
+            // Mismo sistema de coordenadas que GenerateMap: crece de (0,0,0) hacia +X y -Z //
+            float Flt_MaxX = (I_Int_MapLengthX - 1) * I_Int_TileRadius * 2f;
+            float Flt_MinZ = -(I_Int_MapLengthY - 1) * I_Int_TileRadius * 2f;
+            Vector3 Vec3_PickupPos = new Vector3(Random.Range(0f, Flt_MaxX), 0.5f, Random.Range(Flt_MinZ, 0f));
+            Debug.Log("[Pickup Spawn] MapLengthX=" + I_Int_MapLengthX + " MapLengthY=" + I_Int_MapLengthY + " TileRadius=" + I_Int_TileRadius + "  RangoX=[0," + Flt_MaxX + "] RangoZ=[" + Flt_MinZ + ",0] Pos=" + Vec3_PickupPos);
+            GameObject GObj_Pickup = PhotonNetwork.Instantiate(Str_PickupPath, Vec3_PickupPos, Quaternion.identity);
+            if (GObj_Pickup == null) continue;
+            GObj_Pickup.transform.SetParent(I_Trfm_MapContainer);
+        }
+    }
+    #endregion Coroutines Methods
+    #region    PUN         
+    #region    Hastable
+    // Map //
+    public void ApplyMapManagerProperties(Hashtable Hsh_Input)
                     {
                         I_Int_TileRadius =          (int) Hsh_Input[MapTileRadius_KEY];
                         R_Int_A2_MapData = new int[I_Int_MapLengthX, I_Int_MapLengthY];
