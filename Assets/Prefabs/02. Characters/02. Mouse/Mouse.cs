@@ -69,7 +69,6 @@ public class Mouse : MonoBehaviour
                             if (Col_Hit == this.gameObject.GetComponent<MeshCollider>()) break;
                         // Ignore null //
                             if (Col_Hit.transform.parent == null) break;
-                                Debug.Log(Col_Hit.transform.parent.GetComponent<BasePlayer>().ID);
                                 I_Bool_IsTargetMoving = Col_Hit.transform.parent.GetComponent<BasePlayer>().IsMoving;
                         // Verify Hit //
                                 return Col_Hit.GetComponent<BasePlayer>();

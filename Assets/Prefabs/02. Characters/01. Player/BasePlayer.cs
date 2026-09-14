@@ -722,15 +722,19 @@ public class BasePlayer : MonoBehaviourPunCallbacks, IPunObservable
                             }
                         // Position //
                             int Int_RandIndex = UnityEngine.Random.Range(0, MasterManager.Instance.MapManager.SpawnPoints.Length);
+                            Quaternion Quat_Rot = MasterManager.Instance.MapManager.SpawnPoints[Int_RandIndex].gameObject.transform.rotation;
                             this.transform.position = MasterManager.Instance.MapManager.SpawnPoints[Int_RandIndex].gameObject.transform.position;
-                            this.transform.rotation = MasterManager.Instance.MapManager.SpawnPoints[Int_RandIndex].gameObject.transform.rotation;
+                            if (R_E_PT_ClientType != PlayerType.Vigilant)
+                                this.transform.rotation = MasterManager.Instance.MapManager.SpawnPoints[Int_RandIndex].gameObject.transform.rotation;
+                            else
+                                this.transform.rotation = Quaternion.Inverse(Quat_Rot);
                         // Visibility //
                             SetVisibility(true);
                             PhotonNetwork.SendAllOutgoingCommands();
                             MasterManager.Instance.CharacterManager.ChangePlayerMaterial(null, (R_E_PT_ClientType == PlayerType.Chaser) ? 1 : 0);
                         // Rotation lock //
                             if (R_E_PT_ClientType == PlayerType.Vigilant)
-                                StartCoroutine(ReenableRotation());
+                                R_Bool_IsRotationLocked = true;
                     }
                     private void ExecuteReSpawnDelay()
                     {
